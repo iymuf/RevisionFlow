@@ -1,0 +1,3208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReviseFlow — Spaced Revision for Students</title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        surface: '#141416',
+                        card: '#1a1a1d',
+                        border: '#2a2a2e',
+                        accent: '#6366f1',
+                        textPrimary: '#f1f1f3',
+                        textSecondary: '#a1a1a6',
+                        bg: '#0a0a0b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --bg: #0a0a0b;
+            --surface: #141416;
+            --card: #1a1a1d;
+            --border: #2a2a2e;
+            --text-primary: #f1f1f3;
+            --text-secondary: #a1a1a6;
+        }
+
+        * {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text-primary);
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 10px;
+        }
+
+        .glass-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            transition: all 0.25s ease;
+        }
+
+        .glass-card:hover {
+            border-color: #3a3a42;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar-item {
+            transition: all 0.18s ease;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .sidebar-item.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: #5558e6;
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: #a1a1a6;
+            border: 1px solid #2a2a2e;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: #f1f1f3;
+            border-color: #3a3a42;
+        }
+
+        .btn-danger {
+            background: #ef444420;
+            color: #ef4444;
+            border: 1px solid #ef444430;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-danger:hover {
+            background: #ef444430;
+        }
+
+        .heatmap-cell {
+            border-radius: 3px;
+            transition: all 0.15s;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.3);
+            z-index: 2;
+        }
+
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.35s ease forwards;
+        }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+
+        input,
+        select,
+        textarea {
+            background: #1a1a1d;
+            border: 1px solid #2a2a2e;
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: #f1f1f3;
+            font-size: 14px;
+            transition: all 0.2s;
+            outline: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        select {
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .chip.active {
+            border-color: #6366f1;
+            background: #6366f120;
+            color: #a5b4fc;
+        }
+
+        /* Loading splash */
+        #app-loading {
+            position: fixed;
+            inset: 0;
+            background: #0a0a0b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.4s ease;
+        }
+        #app-loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .loader-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #6366f1;
+            margin: 0 4px;
+            animation: loaderBounce 0.6s infinite alternate;
+        }
+        .loader-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .loader-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes loaderBounce {
+            to {
+                transform: translateY(-12px);
+                opacity: 0.5;
+            }
+        }
+    </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+</head>
+<body>
+    <!-- Loading splash (hidden once React mounts) -->
+    <div id="app-loading">
+        <div class="loader-dot"></div>
+        <div class="loader-dot"></div>
+        <div class="loader-dot"></div>
+    </div>
+
+    <div id="root"></div>
+
+    <!-- Core libraries (loaded synchronously - essential) -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js">
+    </script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js">
+    </script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js">
+    </script>
+// ──────────────────────────────────────
+// BLOCK REPETITION HELPER
+// Returns the next calendar block date for a subject,
+// skipping (blockInterval - 1) blocks after the first block that follows startDate.
+// ──────────────────────────────────────
+
+const getNextBlockDate = (subjectId, startDate, blockInterval, calendarBlocks) => {
+    if (!blockInterval || blockInterval < 1) return null;
+    if (!calendarBlocks || !calendarBlocks[subjectId]) return null;
+    const dates = calendarBlocks[subjectId].dates;
+    if (!dates || dates.length === 0) return null;
+
+    // Find the first block that is strictly after startDate
+    let baseIdx = dates.findIndex(d => d > startDate);
+    if (baseIdx === -1) {
+        // All blocks are before startDate → use the last one as the base
+        baseIdx = dates.length - 1;
+    }
+
+    // The target block is blockInterval blocks after the base (1-indexed)
+    const targetIdx = baseIdx + (blockInterval - 1);
+    if (targetIdx >= dates.length) {
+        // If not enough blocks exist, fall back to the last available date
+        return dates[dates.length - 1];
+    }
+    return dates[targetIdx];
+};
+
+
+    <!-- Recharts is loaded ASYNC so it never blocks the app -->
+    <script>
+        // Global flag + promise for Recharts availability
+        window.__rechartsReady = false;
+        window.__rechartsPromise = new Promise(function(resolve) {
+            window.__resolveRecharts = resolve;
+        });
+
+        // Dynamically load Recharts without blocking rendering
+        (function() {
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/recharts@2.10.3/umd/Recharts.js';
+            script.async = true;
+            script.onload = function() {
+                window.__rechartsReady = true;
+                if (window.__resolveRecharts) {
+                    window.__resolveRecharts(true);
+                }
+                // Dispatch custom event so components can re-render
+                window.dispatchEvent(new CustomEvent('recharts-loaded'));
+            };
+            script.onerror = function() {
+                console.warn('Recharts CDN failed to load — charts will use fallback placeholders.');
+                window.__rechartsReady = false;
+                if (window.__resolveRecharts) {
+                    window.__resolveRecharts(false);
+                }
+                window.dispatchEvent(new CustomEvent('recharts-failed'));
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useMemo, createContext, useContext, useRef } = React;
+
+        // ──────────────────────────────────────
+        // UTILITIES
+        // ──────────────────────────────────────
+        const STORAGE_KEY = 'reviseflow_data_v2';
+        const defaultEaseFactor = 2.5;
+        const minEaseFactor = 1.3;
+
+        const loadData = () => {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return null;
+        };
+        const saveData = (data) => {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+        };
+        const getDefaultData = () => ({
+    subjects: [],
+    streak: { current: 0, lastActive: null, longest: 0 },
+    examModes: [],
+    settings: {
+        notifications: true,
+        spacedRepetitionIntervals: [1, 3, 7, 14, 30, 60, 120],
+        defaultEaseFactor: 2.5,
+    },
+    activityLog: {},
+    calendarBlocks: {},            // <-- NEW
+});
+
+        const todayStr = () => new Date().toLocaleDateString('en-CA');
+        const addDays = (dateStr, days) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(year, month - 1, day + days);
+    return d.toLocaleDateString('en-CA');
+};
+        const daysBetween = (d1, d2) => {
+            const a = new Date(d1 + 'T00:00:00');
+            const b = new Date(d2 + 'T00:00:00');
+            return Math.round((b - a) / (1000 * 60 * 60 * 24));
+        };
+        const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            try {
+                return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric',
+                    year: 'numeric' });
+            } catch (e) { return dateStr; }
+        };
+        const formatDateShort = (dateStr) => {
+            if (!dateStr) return '';
+            try {
+                return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            } catch (e) { return dateStr; }
+        };
+
+        const subjectIcons = ['📐', '⚛️', '📜', '🕌', '🇫🇷', '🇬🇧', '🧪', '💻', '🎨', '🏛️', '🌍', '📊', '🧠', '🔬', '📖'];
+        const subjectColors = ['#6366f1', '#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#ef4444', '#06b6d4',
+            '#f97316', '#84cc16', '#14b8a6', '#e11d48', '#7c3aed', '#0891b2', '#ca8a04'
+        ];
+// ──────────────────────────────────────
+// ICS PARSER (for imported calendar files)
+// ──────────────────────────────────────
+// ──────────────────────────────────────
+// ENHANCED ICS PARSER (expands weekly recurrences)
+// ──────────────────────────────────────
+const parseICSFile = (icsText) => {
+    const events = [];
+    const veventBlocks = icsText.split(/BEGIN:VEVENT/i);
+    veventBlocks.shift(); // remove header
+
+    const today = todayStr();
+    const horizon = addDays(today, 365); // 1 year ahead
+    const dayOfWeekMap = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+
+    veventBlocks.forEach(block => {
+        const endIndex = block.indexOf('END:VEVENT');
+        if (endIndex === -1) return;
+        const content = block.substring(0, endIndex);
+
+        // Ignore recurrence overrides (they duplicate base recurrences)
+        if (/RECURRENCE-ID/i.test(content)) return;
+
+        const dtStartMatch = content.match(/DTSTART(?:;[^:]+)?:(\d{8}T?\d{0,6})/i);
+        if (!dtStartMatch) return;
+
+        const dtStartRaw = dtStartMatch[1];
+        const dateBase = dtStartRaw.substring(0, 8);
+        const startDate = `${dateBase.substring(0,4)}-${dateBase.substring(4,6)}-${dateBase.substring(6,8)}`;
+
+        // ── Skip events before 2026 (old academic year) ──
+        const startYear = parseInt(dateBase.substring(0,4), 10);
+        if (startYear < 2026) return;
+
+        const summaryMatch = content.match(/SUMMARY(?:;[^:]+)?:(.+)/i);
+        const summary = summaryMatch ? summaryMatch[1].trim() : '';
+        if (!summary) return;
+
+        // Check for RRULE
+        const rruleMatch = content.match(/RRULE(?:;[^:]+)?:(.+)/i);
+        if (rruleMatch) {
+            const rrule = rruleMatch[1].toUpperCase();
+            if (rrule.includes('FREQ=WEEKLY')) {
+                // Extract BYDAY
+                const bydayMatch = rrule.match(/BYDAY=([A-Z,]+)/);
+                const untilMatch = rrule.match(/UNTIL=(\d{8}T?\d{0,6}Z?)/i);
+
+                let daysOfWeek = [];
+                if (bydayMatch) {
+                    daysOfWeek = bydayMatch[1].split(',').map(d => dayOfWeekMap[d]);
+                } else {
+                    const startDay = new Date(startDate + 'T00:00:00').getDay();
+                    daysOfWeek = [startDay];
+                }
+
+                let untilDate = horizon;
+                if (untilMatch) {
+                    let untilRaw = untilMatch[1];
+                    const untilBase = untilRaw.substring(0, 8);
+                    untilDate = `${untilBase.substring(0,4)}-${untilBase.substring(4,6)}-${untilBase.substring(6,8)}`;
+                    // If the UNTIL date is already past, skip this recurring event entirely
+                    if (untilDate < today) return;
+                }
+
+                // Generate occurrences from startDate to untilDate, but only keep those from today onward
+                let cursor = new Date(startDate + 'T00:00:00');
+                const end = new Date(untilDate + 'T00:00:00');
+                while (cursor <= end) {
+                    const day = cursor.getDay();
+                    if (daysOfWeek.includes(day)) {
+                        const dateStr = cursor.toLocaleDateString('en-CA');
+                        // Only include future dates (today and later)
+                        if (dateStr >= today) {
+                            events.push({ date: dateStr, summary });
+                        }
+                    }
+                    cursor.setDate(cursor.getDate() + 1);
+                }
+            } else {
+                // Non‑weekly recurrence – just add startDate if it is today or future
+                if (startDate >= today) {
+                    events.push({ date: startDate, summary });
+                }
+            }
+        } else {
+            // No recurrence – single event, but only if it’s not in the past
+            if (startDate >= today) {
+                events.push({ date: startDate, summary });
+            }
+        }
+    });
+
+    // Remove duplicates and sort
+    const uniqueEvents = [];
+    const seen = new Set();
+    events.forEach(ev => {
+        const key = ev.date + '|' + ev.summary;
+        if (!seen.has(key)) {
+            seen.add(key);
+            uniqueEvents.push(ev);
+        }
+    });
+    uniqueEvents.sort((a, b) => a.date.localeCompare(b.date));
+
+    return uniqueEvents;
+};
+// ──────────────────────────────────────
+// CALENDAR‑AWARE DATE PICKER
+// ──────────────────────────────────────
+const findNextValidDate = (subjectId, targetDate, calendarBlocks) => {
+    // Never allow "today" or past dates here
+    const tomorrow = addDays(todayStr(), 1);
+    const safeTarget = targetDate <= tomorrow ? tomorrow : targetDate;
+
+    if (!calendarBlocks || !calendarBlocks[subjectId]) {
+        return safeTarget;
+    }
+
+    const dates = calendarBlocks[subjectId].dates;
+    if (!dates || dates.length === 0) {
+        return safeTarget;
+    }
+
+    // Pick the first available calendar date on/after the safe target
+    const next = dates.find(d => d >= safeTarget);
+    return next || safeTarget;
+};
+const getNextBlockDate = (subjectId, startDate, blockInterval, calendarBlocks) => {
+    if (!blockInterval || blockInterval < 1) return null;
+    if (!calendarBlocks || !calendarBlocks[subjectId]) return null;
+    const dates = calendarBlocks[subjectId].dates;
+    if (!dates || dates.length === 0) return null;
+
+    // Find the first block that is strictly after startDate
+    let baseIdx = dates.findIndex(d => d > startDate);
+    if (baseIdx === -1) {
+        // All blocks are before startDate → use the last one as the base
+        baseIdx = dates.length - 1;
+    }
+// Get all future block dates for a lesson (up to maxDate)
+const getAllFutureBlockDates = (subjectId, lesson, calendarBlocks, maxDate = addDays(todayStr(), 365)) => {
+    if (!lesson.blockReview || !lesson.blockInterval || lesson.blockInterval < 1) return [];
+    const blocks = calendarBlocks?.[subjectId];
+    if (!blocks?.dates || blocks.dates.length === 0) return [];
+
+    const start = lesson.nextRevisionDate;
+    if (!start) return [];
+
+    // Find the index of the current nextRevisionDate in the block list
+    let currentIdx = blocks.dates.findIndex(d => d >= start);
+    if (currentIdx === -1) currentIdx = blocks.dates.length - 1;
+
+    const occurrences = [];
+    // Walk forward by blockInterval steps
+    while (currentIdx < blocks.dates.length && blocks.dates[currentIdx] <= maxDate) {
+        occurrences.push(blocks.dates[currentIdx]);
+        currentIdx += lesson.blockInterval;
+    }
+    // Remove the first one if it's exactly the nextRevisionDate (already shown separately)
+    return occurrences.filter(d => d !== start);
+};
+
+    // The target block is blockInterval blocks after the base (1-indexed)
+    const targetIdx = baseIdx + (blockInterval - 1);
+    if (targetIdx >= dates.length) {
+        // If not enough blocks exist, fall back to the last available date
+        return dates[dates.length - 1];
+    }
+    return dates[targetIdx];
+};
+
+const calculateNextInterval = (currentInterval, quality, easeFactor, spacedIntervals = [1, 3, 7, 14, 30, 60, 120]) => {
+    let ival = Number(currentInterval);
+    if (isNaN(ival) || ival < 1) ival = 1;
+
+    let ease = Number(easeFactor);
+    if (isNaN(ease) || ease < 1.3) ease = 2.5;
+
+    const nextBiggerScheduledInterval = (n) => {
+        const found = spacedIntervals.find(x => x > n);
+        return found || Math.min(n + 1, 365);
+    };
+
+    switch (quality) {
+        case 'easy': {
+    const currentIndex = spacedIntervals.findIndex(x => x >= ival);
+
+    if (currentIndex === -1) {
+        ival = Math.min(ival * 2, 365);
+    } else {
+        // Skip one level ahead
+        const nextIndex = Math.min(currentIndex + 2, spacedIntervals.length - 1);
+        ival = spacedIntervals[nextIndex];
+    }
+
+    ease = Math.max(1.3, ease + 0.15);
+    break;
+}
+
+        case 'medium':
+            // IMPORTANT: never stay on the same day / same interval
+            ival = nextBiggerScheduledInterval(ival);
+            break;
+
+        case 'hard':
+            ival = Math.max(2, Math.round(ival * 0.9));
+            ease = Math.max(1.3, ease - 0.2);
+            break;
+
+        case 'forgotten':
+            ival = 1;
+            ease = Math.max(1.3, ease - 0.4);
+            break;
+
+        default:
+            ival = Math.max(2, Math.round(ival * 1.2));
+    }
+
+    return {
+        interval: Math.min(ival, 365),
+        easeFactor: Math.round(ease * 100) / 100
+    };
+};
+        const getRetentionPercentage = (lesson) => {
+            if (!lesson || !lesson.nextRevisionDate || !lesson.lastRevisionDate)
+                return (lesson && lesson.masteryPercentage) ? lesson.masteryPercentage : 50;
+            const today = todayStr();
+            const daysUntilRevision = daysBetween(today, lesson.nextRevisionDate);
+            if (daysUntilRevision > 0) {
+                const totalGap = lesson.interval || 7;
+                return Math.max(10, Math.round(100 - (daysUntilRevision / totalGap) * 60));
+            }
+            const daysSinceRevision = daysBetween(lesson.lastRevisionDate, today);
+            if (daysSinceRevision <= 0) return 95;
+            const decay = Math.round(100 - (daysSinceRevision / (lesson.interval || 7)) * 40);
+            return Math.max(10, Math.min(100, decay));
+        };
+
+        // ──────────────────────────────────────
+        // APP CONTEXT
+        // ──────────────────────────────────────
+        const AppContext = createContext();
+        const useApp = () => useContext(AppContext);
+
+        // ──────────────────────────────────────
+        // ERROR BOUNDARY
+        // ──────────────────────────────────────
+        class ErrorBoundary extends React.Component {
+            constructor(props) { super(props);
+                this.state = { hasError: false, errorMsg: '' }; }
+            static getDerivedStateFromError(error) { return { hasError: true, errorMsg: error?.message || String(
+                    error) }; }
+            componentDidCatch(e, i) { console.error("App crashed:", e, i); }
+            render() {
+                if (this.state.hasError) return (
+                    <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center p-6">
+                        <div className="glass-card p-8 max-w-md text-center">
+                            <h2 className="text-xl font-bold text-red-400 mb-3">Something went wrong</h2>
+                            <p className="text-sm text-[#a1a1a6] mb-2">The application encountered an error.</p>
+                            <p className="text-xs text-red-500/70 mb-4 font-mono break-all">{this.state.errorMsg}</p>
+                            <button onClick={() => {
+                                this.setState({ hasError: false, errorMsg: '' });
+                                window.location.reload();
+                            }} className="btn-primary">Refresh Page</button>
+                        </div>
+                    </div>
+                );
+                return this.props.children;
+            }
+        }
+
+        // ──────────────────────────────────────
+        // MAIN APP
+        // ──────────────────────────────────────
+        const App = () => {
+            const [data, setData] = useState(() => {
+                const loaded = loadData();
+                return loaded || getDefaultData();
+            });
+            const [activeView, setActiveView] = useState('dashboard');
+            const [activeSubjectId, setActiveSubjectId] = useState(null);
+            const [showAddSubject, setShowAddSubject] = useState(false);
+            const [showEditSubject, setShowEditSubject] = useState(null);
+            const [showAddLesson, setShowAddLesson] = useState(false);
+            const [showEditLesson, setShowEditLesson] = useState(null);
+            const [showRatingModal, setShowRatingModal] = useState(null);
+            const [showSearch, setShowSearch] = useState(false);
+            const [toast, setToast] = useState(null);
+            const [sidebarOpen, setSidebarOpen] = useState(true);
+            const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
+            const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+            const [searchQuery, setSearchQuery] = useState('');
+            const [searchFilters, setSearchFilters] = useState({ subjectId: null, status: null, overdue: false,
+                critical: false });
+            const [rechartsAvailable, setRechartsAvailable] = useState(!!window.__rechartsReady);
+            const [appMounted, setAppMounted] = useState(false);
+
+
+            // Hide loading splash once app mounts
+            useEffect(() => {
+                setAppMounted(true);
+                const splash = document.getElementById('app-loading');
+                if (splash) {
+                    splash.classList.add('hidden');
+                    setTimeout(() => { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 500);
+                }
+            }, []);
+
+            // Listen for Recharts load events
+            useEffect(() => {
+                if (window.__rechartsReady) {
+                    setRechartsAvailable(true);
+                    return;
+                }
+                const onLoad = () => setRechartsAvailable(true);
+                const onFail = () => setRechartsAvailable(false);
+                window.addEventListener('recharts-loaded', onLoad);
+                window.addEventListener('recharts-failed', onFail);
+                // Also check the promise
+                if (window.__rechartsPromise) {
+                    window.__rechartsPromise.then((ok) => setRechartsAvailable(!!ok));
+                }
+                return () => {
+                    window.removeEventListener('recharts-loaded', onLoad);
+                    window.removeEventListener('recharts-failed', onFail);
+                };
+            }, []);
+
+            // Persist data
+            useEffect(() => { saveData(data); }, [data]);
+
+            // Streak tracking
+            useEffect(() => {
+                const today = todayStr();
+                if (data.streak.lastActive !== today) {
+                    const yesterday = addDays(today, -1);
+                    const newStreak = (data.streak.lastActive === yesterday) ? data.streak.current + 1 : 1;
+                    setData(prev => ({
+                        ...prev,
+                        streak: {
+                            current: newStreak,
+                            lastActive: today,
+                            longest: Math.max(prev.streak.longest, newStreak)
+                        }
+                    }));
+                }
+            }, []); // eslint-disable-line react-hooks/exhaustive-deps
+// Auto‑reschedule overdue lessons to next calendar block
+// Also fix intervals that are broken
+useEffect(() => {
+    const today = todayStr();
+    const safeTarget = addDays(today, 1); // always at least tomorrow
+    setData(prev => {
+        let changed = false;
+        const newSubjects = prev.subjects.map(subject => ({
+            ...subject,
+            lessons: subject.lessons.map(lesson => {
+                // Fix interval if broken
+                const raw = lesson.interval;
+                const num = Number(raw);
+                let fixedInterval = false;
+                let newInterval = lesson.interval;
+                if (!raw || isNaN(num) || num < 1) {
+                    newInterval = 1;
+                    fixedInterval = true;
+                }
+
+                // Handle block‑review overdue lessons (NEW)
+                // Inside the .map over subject.lessons
+if (lesson.blockReview && lesson.blockInterval > 0) {
+    const next = lesson.nextRevisionDate;
+    // Only recalculate if overdue or no date
+    if (!next || next <= today) {
+        const nextBlock = getNextBlockDate(subject.id, safeTarget, lesson.blockInterval, prev.calendarBlocks);
+        const safeNext = nextBlock || findNextValidDate(subject.id, addDays(today, 1), prev.calendarBlocks);
+        changed = true;
+        return {
+            ...lesson,
+            nextRevisionDate: safeNext,
+            interval: fixedInterval ? 1 : lesson.interval
+        };
+    }
+    // Keep existing future date, but fix interval if broken
+    if (fixedInterval) {
+        changed = true;
+        return { ...lesson, interval: 1 };
+    }
+    return lesson;
+}
+
+                // Normal overdue logic for spaced‑repetition lessons
+                if (lesson.nextRevisionDate && lesson.nextRevisionDate <= today && lesson.status !== 'mastered') {
+                    const newDate = findNextValidDate(subject.id, safeTarget, prev.calendarBlocks);
+                    changed = true;
+                    return {
+                        ...lesson,
+                        nextRevisionDate: newDate,
+                        interval: fixedInterval ? 1 : lesson.interval
+                    };
+                }
+                if (fixedInterval) {
+                    changed = true;
+                    return { ...lesson, interval: 1 };
+                }
+                return lesson;
+            })
+        }));
+        return changed ? { ...prev, subjects: newSubjects } : prev;
+    });
+}, []); // <-- This empty dependency array is important
+            const showToast = useCallback((msg, type = 'info') => {
+                setToast({ msg, type });
+                setTimeout(() => setToast(null), 3000);
+            }, []);
+
+            const addSubject = useCallback((name, color, icon) => {
+                const newSubject = {
+                    id: Date.now().toString(),
+                    name,
+                    color,
+                    icon,
+                    createdAt: todayStr(),
+                    sections: ['Default'],
+                    lessons: []
+                };
+                setData(prev => ({ ...prev, subjects: [...prev.subjects, newSubject] }));
+                setShowAddSubject(false);
+                showToast(`Subject "${name}" created`, 'success');
+            }, [showToast]);
+
+            const editSubject = useCallback((id, updates) => {
+                setData(prev => ({
+                    ...prev,
+                    subjects: prev.subjects.map(s => s.id === id ? { ...s, ...updates } : s)
+                }));
+                setShowEditSubject(null);
+                showToast('Subject updated', 'success');
+            }, [showToast]);
+
+            const deleteSubject = useCallback((id) => {
+                setData(prev => ({
+                    ...prev,
+                    subjects: prev.subjects.filter(s => s.id !== id),
+                    examModes: prev.examModes.map(em => ({
+                        ...em,
+                        criticalLessonIds: em.criticalLessonIds.filter(
+                            lid => !prev.subjects.find(s => s.id === id)?.lessons.some(l => l.id === lid)
+                        )
+                    }))
+                }));
+                if (activeSubjectId === id) { setActiveSubjectId(null);
+                    setActiveView('dashboard'); }
+                showToast('Subject deleted', 'info');
+            }, [activeSubjectId, showToast]);
+
+            const addSection = useCallback((subjectId, sectionName) => {
+                setData(prev => ({
+                    ...prev,
+                    subjects: prev.subjects.map(s =>
+                        s.id === subjectId ? { ...s, sections: [...s.sections, sectionName] } : s
+                    )
+                }));
+                showToast(`Section "${sectionName}" added`, 'success');
+            }, [showToast]);
+
+            const deleteSection = useCallback((subjectId, sectionName) => {
+                setData(prev => ({
+                    ...prev,
+                    subjects: prev.subjects.map(s =>
+                        s.id === subjectId ? {
+                            ...s,
+                            sections: s.sections.filter(sec => sec !== sectionName),
+                            lessons: s.lessons.map(l => l.section === sectionName ? { ...l, section: 'Default' } :
+                                l)
+                        } : s
+                    )
+                }));
+                showToast(`Section "${sectionName}" removed`, 'info');
+            }, [showToast]);
+
+            const addLesson = useCallback((subjectId, lessonData) => {
+    if (!subjectId) return;
+    const newLesson = {
+        id: Date.now().toString(),
+        title: lessonData.title,
+        description: lessonData.description || '',
+        section: lessonData.section || 'Default',
+        dateFirstStudied: lessonData.dateFirstStudied || todayStr(),
+        difficulty: lessonData.difficulty || 'medium',
+        masteryPercentage: lessonData.masteryPercentage || 30,
+        lastRevisionDate: lessonData.lastRevisionDate || null,
+        nextRevisionDate: lessonData.nextRevisionDate || null,
+        revisionHistory: [],
+        status: lessonData.status || 'new',
+        interval: lessonData.interval || null,
+        easeFactor: lessonData.easeFactor || (data.settings?.defaultEaseFactor || defaultEaseFactor),
+        blockReview: lessonData.blockReview || false,
+        blockInterval: lessonData.blockReview ? (lessonData.blockInterval || 4) : 0,
+    };
+
+    // If block-review is enabled and no manual next revision was set,
+    // automatically schedule the first review on the appropriate block day
+    if (newLesson.blockReview && !newLesson.nextRevisionDate) {
+        const startDate = newLesson.dateFirstStudied; // could be today or a future date
+        const next = getNextBlockDate(subjectId, startDate, newLesson.blockInterval, data.calendarBlocks);
+        if (next) {
+            newLesson.nextRevisionDate = next;
+        } else {
+            // No calendar blocks – fallback to the day after startDate (user should import ICS)
+            newLesson.nextRevisionDate = addDays(startDate, 1);
+        }
+    }
+
+    // Manual override still takes precedence (already set above if provided)
+    if (lessonData.manualNextRevision) newLesson.nextRevisionDate = lessonData.manualNextRevision;
+
+    setData(prev => ({
+        ...prev,
+        subjects: prev.subjects.map(s =>
+            s.id === subjectId ? { ...s, lessons: [...s.lessons, newLesson] } : s
+        )
+    }));
+    setShowAddLesson(false);
+    showToast(`Lesson "${lessonData.title}" added`, 'success');
+}, [data.settings, showToast]);
+
+            const editLessonFull = useCallback((subjectId, lessonId, updates) => {
+                setData(prev => ({
+                    ...prev,
+                    subjects: prev.subjects.map(s =>
+                        s.id === subjectId ? {
+                            ...s,
+                            lessons: s.lessons.map(l => l.id === lessonId ? { ...l, ...updates } : l)
+                        } : s
+                    )
+                }));
+                setShowEditLesson(null);
+                showToast('Lesson updated', 'success');
+            }, [showToast]);
+
+            const deleteLesson = useCallback((subjectId, lessonId) => {
+                setData(prev => ({
+                    ...prev,
+                    subjects: prev.subjects.map(s =>
+                        s.id === subjectId ? { ...s, lessons: s.lessons.filter(l => l.id !== lessonId) } : s
+                    ),
+                    examModes: prev.examModes.map(em => ({
+                        ...em,
+                        criticalLessonIds: em.criticalLessonIds.filter(lid => lid !== lessonId)
+                    }))
+                }));
+                showToast('Lesson deleted', 'info');
+            }, [showToast]);
+
+            const studyToday = useCallback((subjectId, lessonId) => {
+    const today = todayStr();
+    const intervals = data.settings?.spacedRepetitionIntervals || [1, 3, 7, 14, 30, 60, 120];
+    setData(prev => ({
+        ...prev,
+        subjects: prev.subjects.map(s =>
+            s.id === subjectId ? {
+                ...s,
+                lessons: s.lessons.map(l => {
+                    if (l.id !== lessonId) return l;
+
+                    // Inside the lesson mapping of studyToday
+if (l.blockReview && l.blockInterval > 0) {
+    const nextBlock = getNextBlockDate(subjectId, today, l.blockInterval, prev.calendarBlocks);
+    const safeNext = nextBlock || findNextValidDate(subjectId, addDays(today, 1), prev.calendarBlocks);
+    return {
+        ...l,
+        dateFirstStudied: l.dateFirstStudied || today,
+        lastRevisionDate: today,
+        nextRevisionDate: safeNext,
+        interval: l.interval || 1,
+        status: 'learning',
+        revisionHistory: [...l.revisionHistory, { date: today, quality: 'studied' }]
+    };
+}
+
+                    // ── NORMAL SPACED REPETITION ──
+                    return {
+                        ...l,
+                        dateFirstStudied: l.dateFirstStudied || today,
+                        lastRevisionDate: today,
+                        nextRevisionDate: findNextValidDate(
+                            s.id,
+                            addDays(today, Math.max(1, intervals[0] || 1)),
+                            prev.calendarBlocks
+                        ),
+                        interval: intervals[0] || 1,
+                        status: 'learning',
+                        revisionHistory: [...l.revisionHistory, { date: today, quality: 'studied' }]
+                    };
+                })
+            } : s
+        ),
+        activityLog: { ...prev.activityLog, [today]: (prev.activityLog[today] || 0) + 1 }
+    }));
+    showToast('Revision scheduled!', 'success');
+}, [data.settings, showToast]);
+
+            const rateRecall = useCallback((subjectId, lessonId, quality) => {
+    const today = todayStr();
+    const easeFactorBase = data.settings?.defaultEaseFactor || defaultEaseFactor;
+    const intervals = data.settings?.spacedRepetitionIntervals || [1, 3, 7, 14, 30, 45];
+
+    setData(prev => ({
+        ...prev,
+        subjects: prev.subjects.map(s =>
+            s.id === subjectId ? {
+                ...s,
+                lessons: s.lessons.map(l => {
+                    if (l.id !== lessonId) return l;
+
+                    // ── BLOCK‑REVIEW MODE ──
+                    if (l.blockReview && l.blockInterval > 0) {
+    const nextBlock = getNextBlockDate(subjectId, today, l.blockInterval, prev.calendarBlocks);
+    // If no block date could be found, try the existing calendar‑snapping function
+    const safeNext = nextBlock || findNextValidDate(subjectId, addDays(today, 1), prev.calendarBlocks);
+    return {
+        ...l,
+        lastRevisionDate: today,
+        nextRevisionDate: safeNext,
+        revisionHistory: [...l.revisionHistory, { date: today, quality }],
+        // keep existing interval & easeFactor
+    };
+}
+
+                    // ── NORMAL SPACED REPETITION ──
+                    const rawInterval = (l.interval == null || l.interval === 0) ? 1 : Number(l.interval) || 1;
+                    const rawEase = (l.easeFactor == null) ? easeFactorBase : Number(l.easeFactor) || easeFactorBase;
+                    const { interval, easeFactor } = calculateNextInterval(rawInterval, quality, rawEase, intervals);
+
+                    const rawTarget = addDays(today, interval);
+                    const safeTarget = rawTarget <= today ? addDays(today, 1) : rawTarget;
+
+                    const newStatus = quality === 'forgotten' ? 'learning' :
+                        interval >= 60 ? 'mastered' :
+                        interval >= 14 ? 'stable' : 'learning';
+
+                    return {
+                        ...l,
+                        lastRevisionDate: today,
+                        nextRevisionDate: findNextValidDate(s.id, safeTarget, prev.calendarBlocks),
+                        interval,
+                        easeFactor,
+                        status: newStatus,
+                        masteryPercentage: quality === 'easy'
+                            ? Math.min(100, (l.masteryPercentage || 50) + 10)
+                            : quality === 'forgotten'
+                                ? Math.max(10, (l.masteryPercentage || 50) - 20)
+                                : (l.masteryPercentage || 50),
+                        revisionHistory: [...l.revisionHistory, { date: today, quality }]
+                    };
+                })
+            } : s
+        ),
+        activityLog: { ...prev.activityLog, [today]: (prev.activityLog[today] || 0) + 1 }
+    }));
+
+    setShowRatingModal(null);
+    const msgs = { easy: 'Great job! 🎉', medium: 'Good work! 👍', hard: 'Keep at it! 💪', forgotten: 'No worries — reset! 🔄' };
+    showToast(msgs[quality] || 'Reviewed!', 'info');
+}, [data.settings, showToast]);
+
+            const addExamMode = useCallback((examName, examDate) => {
+                const newExam = {
+                    id: Date.now().toString(),
+                    enabled: true,
+                    examDate,
+                    examName,
+                    criticalLessonIds: []
+                };
+                setData(prev => ({ ...prev, examModes: [...prev.examModes, newExam] }));
+                showToast(`Exam "${examName}" added`, 'success');
+            }, [showToast]);
+
+            const toggleExamMode = useCallback((examId, enabled) => {
+                setData(prev => ({
+                    ...prev,
+                    examModes: prev.examModes.map(em => em.id === examId ? { ...em, enabled } : em)
+                }));
+            }, []);
+
+            const deleteExamMode = useCallback((examId) => {
+                setData(prev => ({
+                    ...prev,
+                    examModes: prev.examModes.filter(em => em.id !== examId)
+                }));
+                showToast('Exam removed', 'info');
+            }, [showToast]);
+
+            const toggleCriticalLesson = useCallback((examId, lessonId) => {
+                setData(prev => ({
+                    ...prev,
+                    examModes: prev.examModes.map(em =>
+                        em.id === examId ? {
+                            ...em,
+                            criticalLessonIds: em.criticalLessonIds.includes(lessonId) ?
+                                em.criticalLessonIds.filter(id => id !== lessonId) :
+                                [...em.criticalLessonIds, lessonId]
+                        } : em
+                    )
+                }));
+            }, []);
+
+            const updateSettings = useCallback((newSettings) => {
+                setData(prev => ({ ...prev, settings: { ...prev.settings, ...newSettings } }));
+                showToast('Settings saved', 'success');
+            }, [showToast]);
+
+            const exportData = useCallback(() => {
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `reviseflow-backup-${todayStr()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('Data exported!', 'success');
+            }, [data, showToast]);
+
+            const importData = useCallback((file) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if (imported && imported.subjects && imported.settings) {
+                            setData(imported);
+                            showToast('Data imported successfully!', 'success');
+                        } else { showToast('Invalid backup file', 'error'); }
+                    } catch (err) { showToast('Failed to parse file', 'error'); }
+                };
+                reader.readAsText(file);
+            }, [showToast]);
+
+            const resetData = useCallback(() => {
+                if (window.confirm('Delete ALL data? This cannot be undone.')) {
+                    setData(getDefaultData());
+                    setActiveView('dashboard');
+                    setActiveSubjectId(null);
+                    showToast('All data reset', 'info');
+                }
+            }, [showToast]);
+
+            const getAllLessons = useCallback(() => {
+                if (!data || !data.subjects) return [];
+                return data.subjects.flatMap(s =>
+                    (s.lessons || []).map(l => ({
+                        ...l,
+                        subjectId: s.id,
+                        subjectName: s.name,
+                        subjectColor: s.color
+                    }))
+                );
+            }, [data]);
+
+
+            const getTodayRevisions = useCallback(() => {
+                const today = todayStr();
+                return getAllLessons().filter(
+                    l => l.nextRevisionDate && l.nextRevisionDate <= today && l.status !== 'mastered'
+                );
+            }, [getAllLessons]);
+
+            const getUpcomingRevisions = useCallback(() => {
+                const today = todayStr();
+                const nextWeek = addDays(today, 7);
+                return getAllLessons().filter(
+                    l => l.nextRevisionDate && l.nextRevisionDate > today && l.nextRevisionDate <= nextWeek
+                );
+            }, [getAllLessons]);
+
+            const getOverdueRevisions = useCallback(() => {
+                const today = todayStr();
+                return getAllLessons().filter(
+                    l => l.nextRevisionDate && l.nextRevisionDate < today && l.status !== 'mastered'
+                );
+            }, [getAllLessons]);
+
+            const getSubjectRetention = useCallback((subjectId) => {
+                const subject = data.subjects.find(s => s.id === subjectId);
+                if (!subject || !subject.lessons || subject.lessons.length === 0) return 0;
+                return Math.round(
+                    subject.lessons.reduce((sum, l) => sum + getRetentionPercentage(l), 0) / subject.lessons.length
+                );
+            }, [data.subjects]);
+
+            const getOverallRetention = useCallback(() => {
+                const all = getAllLessons();
+                if (all.length === 0) return 0;
+                return Math.round(all.reduce((sum, l) => sum + getRetentionPercentage(l), 0) / all.length);
+            }, [getAllLessons]);
+
+            const contextValue = {
+                data,
+                setData,
+                activeView,
+                setActiveView,
+                activeSubjectId,
+                setActiveSubjectId,
+                showAddSubject,
+                setShowAddSubject,
+                showEditSubject,
+                setShowEditSubject,
+                showAddLesson,
+                setShowAddLesson,
+                showEditLesson,
+                setShowEditLesson,
+                showRatingModal,
+                setShowRatingModal,
+                showSearch,
+                setShowSearch,
+                searchQuery,
+                setSearchQuery,
+                searchFilters,
+                setSearchFilters,
+                toast,
+                showToast,
+                addSubject,
+                editSubject,
+                deleteSubject,
+                addSection,
+                deleteSection,
+                addLesson,
+                editLessonFull,
+                deleteLesson,
+                studyToday,
+                rateRecall,
+                addExamMode,
+                toggleExamMode,
+                deleteExamMode,
+                toggleCriticalLesson,
+                updateSettings,
+                exportData,
+                importData,
+                resetData,
+                getAllLessons,
+                getTodayRevisions,
+                getUpcomingRevisions,
+                getOverdueRevisions,
+                getSubjectRetention,
+                getOverallRetention,
+                calendarMonth,
+                setCalendarMonth,
+                calendarYear,
+                setCalendarYear,
+                sidebarOpen,
+                setSidebarOpen,
+                rechartsAvailable,
+            };
+
+            const activeSubject = data.subjects.find(s => s.id === activeSubjectId);
+
+            return (
+                <AppContext.Provider value={contextValue}>
+                    <div className="flex h-screen w-screen overflow-hidden bg-[#0a0a0b]">
+                        <Sidebar />
+                        <div className="flex-1 flex flex-col overflow-hidden">
+                            <TopBar />
+                            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                                {activeView === 'dashboard' && <Dashboard />}
+                                {activeView === 'subject' && activeSubject && <SubjectDetail />}
+                                {activeView === 'calendar' && <CalendarView />}
+                                {activeView === 'analytics' && <AnalyticsView />}
+                                {activeView === 'exam' && <ExamModeView />}
+                                {activeView === 'settings' && <SettingsView />}
+                            </div>
+                        </div>
+                        {showAddSubject && <AddSubjectModal />}
+                        {showEditSubject && <EditSubjectModal />}
+                        {showAddLesson && <AddLessonModal />}
+                        {showEditLesson && <EditLessonModal />}
+                        {showRatingModal && <RatingModal />}
+                        {showSearch && <SearchOverlay />}
+                        {toast && <ToastMessage />}
+                    </div>
+                </AppContext.Provider>
+            );
+        };
+
+        // ──────────────────────────────────────
+        // SIDEBAR
+        // ──────────────────────────────────────
+        const Sidebar = () => {
+            const {
+                data, activeView, setActiveView, activeSubjectId, setActiveSubjectId,
+                setShowAddSubject, sidebarOpen, setSidebarOpen, getTodayRevisions,
+                getOverdueRevisions, setShowSearch
+            } = useApp();
+            const todayRevs = getTodayRevisions();
+            const overdueRevs = getOverdueRevisions();
+            const pendingTotal = (todayRevs?.length || 0) + (overdueRevs?.length || 0);
+
+            const navItems = [
+                {
+                    view: 'dashboard',
+                    icon: 'M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z',
+                    label: 'Dashboard',
+                    badge: pendingTotal
+                },
+                {
+                    view: 'calendar',
+                    icon: 'M3 4h18v18H3V4zm2 2v14h14V6H5zm2 0h10v2H7V6zm0 4h10v2H7v-2zm0 4h7v2H7v-2z',
+                    label: 'Calendar'
+                },
+                {
+                    view: 'analytics',
+                    icon: 'M18 20V10M12 20V4M6 20v-6',
+                    label: 'Analytics'
+                },
+                {
+                    view: 'exam',
+                    icon: 'M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z',
+                    label: 'Exam Mode',
+                    pulse: data.examModes && data.examModes.some(em => em.enabled)
+                },
+                {
+                    view: 'settings',
+                    icon: 'M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z',
+                    label: 'Settings'
+                },
+            ];
+
+            return (
+                <div className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-[#0d0d10] border-r border-[#1e1e24] flex flex-col transition-all duration-300 flex-shrink-0 z-20`}>
+                    <div className="p-4 flex items-center justify-between">
+                        {sidebarOpen && (
+                            <h1 className="text-lg font-bold tracking-tight text-white">
+                                <span className="text-indigo-400">Revise</span>Flow
+                            </h1>
+                        )}
+                        <button
+                            onClick={() => setSidebarOpen(!sidebarOpen)}
+                            className="text-[#a1a1a6] hover:text-white p-1.5 rounded-lg hover:bg-[#1a1a1d] transition-all"
+                            aria-label="Toggle sidebar"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d={sidebarOpen ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"} />
+                            </svg>
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto px-2 space-y-0.5">
+                        {navItems.map(item => (
+                            <div
+                                key={item.view}
+                                onClick={() => {
+                                    setActiveView(item.view);
+                                    if (item.view !== 'subject') setActiveSubjectId(null);
+                                }}
+                                className={`sidebar-item px-3 py-2.5 flex items-center gap-3 ${activeView === item.view ? 'active' : 'text-[#a1a1a6]'}`}
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d={item.icon} />
+                                </svg>
+                                {sidebarOpen && (
+                                    <span className="text-sm font-medium flex items-center gap-2">
+                                        {item.label}
+                                        {item.badge > 0 && (
+                                            <span className="bg-indigo-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                                                {item.badge}
+                                            </span>
+                                        )}
+                                        {item.pulse && (
+                                            <span className="w-2 h-2 rounded-full bg-amber-400 pulse-dot"></span>
+                                        )}
+                                    </span>
+                                )}
+                            </div>
+                        ))}
+                        <div className="my-3 border-t border-[#1e1e24]"></div>
+                        {sidebarOpen && (
+                            <div className="px-2 mb-1 flex items-center justify-between">
+                                <span className="text-xs font-semibold uppercase tracking-wider text-[#6b6b72]">Subjects</span>
+                                <button
+                                    onClick={() => setShowAddSubject(true)}
+                                    className="text-[#a1a1a6] hover:text-white p-1 rounded-md hover:bg-[#1a1a1d] transition-all"
+                                    aria-label="Add subject"
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <path d="M12 5v14M5 12h14" />
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
+                        {(data.subjects || []).map(subject => (
+                            <div
+                                key={subject.id}
+                                onClick={() => {
+                                    setActiveView('subject');
+                                    setActiveSubjectId(subject.id);
+                                }}
+                                className={`sidebar-item px-3 py-2.5 flex items-center gap-3 cursor-pointer ${activeSubjectId === subject.id && activeView === 'subject' ? 'active' : 'text-[#a1a1a6]'}`}
+                            >
+                                <span className="text-base flex-shrink-0">{subject.icon}</span>
+                                {sidebarOpen && (
+                                    <span className="text-sm font-medium truncate flex-1">{subject.name}</span>
+                                )}
+                                {sidebarOpen && (
+                                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: subject.color }}></span>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    <div className="p-3 border-t border-[#1e1e24]">
+                        {sidebarOpen && (
+                            <div className="flex items-center gap-2 text-xs text-[#6b6b72]">
+                                <span className="text-amber-400">🔥</span>
+                                Streak: {data.streak?.current || 0}d
+                                {(data.streak?.longest > 0) && ` (best: ${data.streak.longest})`}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // ──────────────────────────────────────
+        // TOP BAR
+        // ──────────────────────────────────────
+        const TopBar = () => {
+            const {
+                activeView, data, getOverallRetention, getTodayRevisions,
+                getOverdueRevisions, activeSubjectId, setShowSearch, searchQuery
+            } = useApp();
+            const overallRetention = getOverallRetention();
+            const pendingCount = (getTodayRevisions()?.length || 0) + (getOverdueRevisions()?.length || 0);
+
+            const viewTitles = {
+                dashboard: 'Daily Dashboard',
+                subject: (data.subjects.find(s => s.id === activeSubjectId)?.name) || 'Subject',
+                calendar: 'Revision Calendar',
+                analytics: 'Memory Health Analytics',
+                exam: 'Exam Preparation Mode',
+                settings: 'Settings'
+            };
+
+            return (
+                <div className="h-14 bg-[#0d0d10] border-b border-[#1e1e24] flex items-center px-4 md:px-6 gap-3 flex-shrink-0">
+                    <h2 className="text-base font-semibold text-white">{viewTitles[activeView] || 'ReviseFlow'}</h2>
+                    <div className="flex-1"></div>
+                    <button
+                        onClick={() => setShowSearch(true)}
+                        className="btn-ghost text-xs flex items-center gap-2 px-3 py-1.5"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="M21 21l-4.35-4.35" />
+                        </svg>
+                        {searchQuery ? (
+                            <span className="text-indigo-300 truncate max-w-[100px]">{searchQuery}</span>
+                        ) : (
+                            <span className="hidden sm:inline">Search lessons...</span>
+                        )}
+                    </button>
+                    {pendingCount > 0 && (
+                        <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2.5 py-1 rounded-full font-medium">
+                            {pendingCount} pending
+                        </span>
+                    )}
+                    <span className="text-xs text-[#a1a1a6] hidden sm:inline">
+                        Retention: {overallRetention}%
+                    </span>
+                </div>
+            );
+        };
+
+        // ──────────────────────────────────────
+        // SEARCH OVERLAY
+        // ──────────────────────────────────────
+        const SearchOverlay = () => {
+            const {
+                setShowSearch, searchQuery, setSearchQuery, searchFilters, setSearchFilters,
+                getAllLessons, data, setActiveView, setActiveSubjectId
+            } = useApp();
+            const allLessons = getAllLessons();
+            const today = todayStr();
+
+            const filtered = allLessons.filter(l => {
+                if (searchQuery &&
+                    !l.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+                    !l.subjectName.toLowerCase().includes(searchQuery.toLowerCase()) &&
+                    !(l.description || '').toLowerCase().includes(searchQuery.toLowerCase())) {
+                    return false;
+                }
+                if (searchFilters.subjectId && l.subjectId !== searchFilters.subjectId) return false;
+                if (searchFilters.status && l.status !== searchFilters.status) return false;
+                if (searchFilters.overdue && !(l.nextRevisionDate && l.nextRevisionDate < today && l.status !==
+                        'mastered')) return false;
+                if (searchFilters.critical && !data.examModes.some(em => em.criticalLessonIds.includes(l.id)))
+                    return false;
+                return true;
+            });
+
+            const statusOptions = ['new', 'learning', 'stable', 'mastered'];
+            const clearFilters = () => setSearchFilters({ subjectId: null, status: null, overdue: false, critical: false });
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 modal-overlay" onClick={() => setShowSearch(false)}>
+                    <div
+                        className="bg-[#1a1a1d] border border-[#2a2a2e] rounded-2xl p-5 w-full max-w-2xl mx-4 shadow-2xl max-h-[70vh] flex flex-col"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center gap-2 mb-3">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a1a1a6" strokeWidth="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="M21 21l-4.35-4.35" />
+                            </svg>
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                placeholder="Search by lesson name, subject, or notes..."
+                                autoFocus
+                                className="flex-1 border-none bg-transparent !p-0 !text-sm focus:ring-0"
+                            />
+                        </div>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            <span
+                                className={`chip ${!searchFilters.subjectId && !searchFilters.status && !searchFilters.overdue && !searchFilters.critical ? 'active' : 'bg-[#141416] text-[#a1a1a6]'}`}
+                                onClick={clearFilters}
+                            >All</span>
+                            {data.subjects.map(s => (
+                                <span
+                                    key={s.id}
+                                    className={`chip ${searchFilters.subjectId === s.id ? 'active' : 'bg-[#141416] text-[#a1a1a6]'}`}
+                                    onClick={() => setSearchFilters(prev => ({ ...prev, subjectId: prev.subjectId === s.id ? null : s.id }))}
+                                >{s.icon} {s.name}</span>
+                            ))}
+                            <span
+                                className={`chip ${searchFilters.overdue ? 'active' : 'bg-[#141416] text-[#a1a1a6]'}`}
+                                onClick={() => setSearchFilters(prev => ({ ...prev, overdue: !prev.overdue }))}
+                            >⚠️ Overdue</span>
+                            <span
+                                className={`chip ${searchFilters.critical ? 'active' : 'bg-[#141416] text-[#a1a1a6]'}`}
+                                onClick={() => setSearchFilters(prev => ({ ...prev, critical: !prev.critical }))}
+                            >⭐ Critical</span>
+                            {statusOptions.map(st => (
+                                <span
+                                    key={st}
+                                    className={`chip capitalize ${searchFilters.status === st ? 'active' : 'bg-[#141416] text-[#a1a1a6]'}`}
+                                    onClick={() => setSearchFilters(prev => ({ ...prev, status: prev.status === st ? null : st }))}
+                                >{st}</span>
+                            ))}
+                        </div>
+                        <div className="flex-1 overflow-y-auto space-y-1">
+                            {filtered.length === 0 ? (
+                                <p className="text-sm text-[#6b6b72] text-center py-8">No lessons found</p>
+                            ) : (
+                                filtered.slice(0, 50).map(l => (
+                                    <div
+                                        key={l.id}
+                                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#141416] transition-all cursor-pointer"
+                                        onClick={() => {
+                                            setActiveSubjectId(l.subjectId);
+                                            setActiveView('subject');
+                                            setShowSearch(false);
+                                        }}
+                                    >
+                                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: l.subjectColor }}></div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-white truncate">{l.title}</p>
+                                            <p className="text-xs text-[#6b6b72]">{l.subjectName} · {l.section || 'Default'} · {l.status}</p>
+                                        </div>
+                                        <span className="text-xs text-[#6b6b72]">
+                                            {l.nextRevisionDate ? formatDateShort(l.nextRevisionDate) : 'Not scheduled'}
+                                        </span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ──────────────────────────────────────
+        // DASHBOARD
+        // ──────────────────────────────────────
+        const Dashboard = () => {
+            const {
+                getTodayRevisions, getOverdueRevisions, getAllLessons, getOverallRetention,
+                data, setActiveView, setActiveSubjectId, setShowRatingModal, studyToday
+            } = useApp();
+            const todayRevs = getTodayRevisions();
+            const overdueRevs = getOverdueRevisions();
+            const allLessons = getAllLessons();
+            const overallRetention = getOverallRetention();
+            const today = todayStr();
+
+            const recentLessons = allLessons
+                .filter(l => l.lastRevisionDate)
+                .sort((a, b) => daysBetween(b.lastRevisionDate, a.lastRevisionDate))
+                .slice(0, 5);
+
+            const subjectRetentions = data.subjects
+                .map(s => ({
+                    name: s.name,
+                    color: s.color,
+                    retention: s.lessons.length > 0
+                        ? Math.round(s.lessons.reduce((sum, l) => sum + getRetentionPercentage(l), 0) / s.lessons.length)
+                        : 0,
+                    lessonCount: s.lessons.length
+                }))
+                .filter(s => s.lessonCount > 0);
+
+            const heatmapDays = useMemo(() => {
+                const days = [];
+                for (let i = 83; i >= 0; i--) {
+                    const d = addDays(today, -i);
+                    days.push({ date: d, count: (data.activityLog && data.activityLog[d]) || 0 });
+                }
+                return days;
+            }, [data.activityLog, today]);
+
+            const getHeatColor = (c) =>
+                c === 0 ? '#1a1a1d' :
+                c === 1 ? '#1e3a5f' :
+                c === 2 ? '#2d5a8e' :
+                c === 3 ? '#4a7fc1' : '#6366f1';
+
+            const handleRevisionClick = (lesson) => {
+                setActiveSubjectId(lesson.subjectId);
+                setShowRatingModal({
+                    subjectId: lesson.subjectId,
+                    lessonId: lesson.id,
+                    lessonTitle: lesson.title
+                });
+            };
+
+            const weakLessons = allLessons
+                .filter(l => getRetentionPercentage(l) < 40 && l.status !== 'new')
+                .slice(0, 4);
+
+            const combinedRevs = [...(overdueRevs || []), ...(todayRevs || [])];
+
+            return (
+                <div className="space-y-5 fade-in max-w-5xl mx-auto">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="glass-card p-4">
+                            <p className="text-xs text-[#a1a1a6] mb-1">Today's Revisions</p>
+                            <p className="text-2xl font-bold text-white">{todayRevs.length}</p>
+                        </div>
+                        <div className="glass-card p-4">
+                            <p className="text-xs text-[#a1a1a6] mb-1">Overdue</p>
+                            <p className="text-2xl font-bold text-red-400">{overdueRevs.length}</p>
+                        </div>
+                        <div className="glass-card p-4">
+                            <p className="text-xs text-[#a1a1a6] mb-1">Retention</p>
+                            <p className="text-2xl font-bold text-emerald-400">{overallRetention}%</p>
+                        </div>
+                        <div className="glass-card p-4">
+                            <p className="text-xs text-[#a1a1a6] mb-1">Streak</p>
+                            <p className="text-2xl font-bold text-amber-400">{data.streak?.current || 0} 🔥</p>
+                        </div>
+                    </div>
+                    <div className="glass-card p-4 overflow-x-auto">
+                        <p className="text-xs font-semibold text-[#a1a1a6] mb-3 uppercase tracking-wider">Study Activity</p>
+                        <div className="flex gap-1 flex-wrap" style={{ minWidth: '600px' }}>
+                            {heatmapDays.map((d, i) => (
+                                <div
+                                    key={i}
+                                    className="heatmap-cell"
+                                    style={{ width: '11px', height: '11px', backgroundColor: getHeatColor(d.count) }}
+                                    title={`${d.date}: ${d.count} revision(s)`}
+                                ></div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                        <div className="glass-card p-4">
+                            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-indigo-400 pulse-dot"></span>
+                                Today's Revisions
+                            </h3>
+                            {combinedRevs.length === 0 ? (
+                                <p className="text-sm text-[#6b6b72] text-center py-6">All caught up! 🎉</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {combinedRevs.slice(0, 8).map(lesson => (
+                                        <div
+                                            key={lesson.id}
+                                            className="flex items-center gap-3 p-3 rounded-xl bg-[#141416] hover:bg-[#1c1c20] transition-all cursor-pointer"
+                                            onClick={() => handleRevisionClick(lesson)}
+                                        >
+                                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: lesson.subjectColor }}></div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-white truncate">{lesson.title}</p>
+                                                <p className="text-xs text-[#6b6b72]">
+                                                    {lesson.subjectName} · Due {formatDateShort(lesson.nextRevisionDate)}
+                                                </p>
+                                            </div>
+                                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${daysBetween(lesson.nextRevisionDate, today) < 0 ? 'bg-red-500/15 text-red-400' : 'bg-indigo-500/15 text-indigo-300'}`}>
+                                                {daysBetween(lesson.nextRevisionDate, today) < 0
+                                                    ? `${Math.abs(daysBetween(lesson.nextRevisionDate, today))}d overdue`
+                                                    : 'Today'}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className="glass-card p-4">
+                            <h3 className="text-sm font-semibold text-white mb-3">Subject Retention</h3>
+                            {subjectRetentions.length === 0 ? (
+                                <p className="text-sm text-[#6b6b72] text-center py-6">No data yet</p>
+                            ) : (
+                                <div className="space-y-2.5">
+                                    {subjectRetentions.map(s => (
+                                        <div key={s.name} className="flex items-center gap-3">
+                                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }}></div>
+                                            <span className="text-sm text-[#d1d1d6] flex-1 truncate">{s.name}</span>
+                                            <div className="w-24 h-2 bg-[#1e1e24] rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full transition-all"
+                                                    style={{
+                                                        width: `${s.retention}%`,
+                                                        backgroundColor: s.retention > 70 ? '#10b981' : s.retention > 40 ? '#f59e0b' : '#ef4444'
+                                                    }}
+                                                ></div>
+                                            </div>
+                                            <span className="text-xs text-[#a1a1a6] w-10 text-right">{s.retention}%</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className="glass-card p-4">
+                            <h3 className="text-sm font-semibold text-white mb-3">Recently Studied</h3>
+                            {recentLessons.length === 0 ? (
+                                <p className="text-sm text-[#6b6b72] text-center py-6">Start studying!</p>
+                            ) : (
+                                recentLessons.map(l => (
+                                    <div key={l.id} className="flex items-center gap-3 py-2 border-b border-[#1e1e24] last:border-0">
+                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: l.subjectColor }}></div>
+                                        <span className="text-sm text-[#d1d1d6] flex-1 truncate">{l.title}</span>
+                                        <span className="text-xs text-[#6b6b72]">{formatDateShort(l.lastRevisionDate)}</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <div className="glass-card p-4">
+                            <h3 className="text-sm font-semibold text-white mb-3">⚠️ Weakest Lessons</h3>
+                            {weakLessons.length === 0 ? (
+                                <p className="text-sm text-[#6b6b72] text-center py-6">No weak lessons!</p>
+                            ) : (
+                                weakLessons.map(l => (
+                                    <div
+                                        key={l.id}
+                                        className="flex items-center gap-3 py-2 border-b border-[#1e1e24] last:border-0 cursor-pointer hover:bg-[#141416] rounded px-2"
+                                        onClick={() => {
+                                            setActiveSubjectId(l.subjectId);
+                                            setActiveView('subject');
+                                        }}
+                                    >
+                                        <span>📉</span>
+                                        <span className="text-sm text-[#d1d1d6] flex-1 truncate">{l.title}</span>
+                                        <span className="text-xs text-red-400 font-medium">{getRetentionPercentage(l)}%</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ──────────────────────────────────────
+        // SUBJECT DETAIL (with sections)
+        // ──────────────────────────────────────
+        const SubjectDetail = () => {
+            const {
+                data, activeSubjectId, setShowAddLesson, setShowEditLesson, deleteLesson,
+                studyToday, setShowRatingModal, getSubjectRetention, setActiveView,
+                setActiveSubjectId, setShowEditSubject, deleteSubject, addSection, deleteSection
+            } = useApp();
+            const subject = data.subjects.find(s => s.id === activeSubjectId);
+            if (!subject) return <div className="text-center py-10 text-[#6b6b72]">Subject not found</div>;
+
+            const retention = getSubjectRetention(subject.id);
+            const today = todayStr();
+            const [newSectionName, setNewSectionName] = useState('');
+            const [activeSection, setActiveSection] = useState('All');
+
+            const sections = ['All', ...(subject.sections || [])];
+            const filteredLessons = activeSection === 'All'
+                ? subject.lessons
+                : subject.lessons.filter(l => l.section === activeSection);
+
+            const handleReviewClick = (lesson) => {
+                if (lesson.nextRevisionDate && lesson.nextRevisionDate <= today && lesson.status !== 'new') {
+                    setShowRatingModal({ subjectId: subject.id, lessonId: lesson.id, lessonTitle: lesson.title });
+                } else {
+                    studyToday(subject.id, lesson.id);
+                }
+            };
+
+            const getLabel = (l) =>
+                l.status === 'new' ? 'Study Now' :
+                l.nextRevisionDate && l.nextRevisionDate <= today ? 'Review Now' :
+                l.nextRevisionDate ? `Next: ${formatDateShort(l.nextRevisionDate)}` : 'Study';
+
+            const getStyle = (l) =>
+                l.nextRevisionDate && l.nextRevisionDate <= today && l.status !== 'new'
+                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                : l.status === 'new'
+                ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                : 'bg-[#1a1a1d] text-[#a1a1a6] border-[#2a2a2e]';
+
+            const sortedLessons = [...filteredLessons].sort((a, b) => {
+                const aDue = a.nextRevisionDate && a.nextRevisionDate <= today ? 0 : 1;
+                const bDue = b.nextRevisionDate && b.nextRevisionDate <= today ? 0 : 1;
+                return aDue - bDue || (a.nextRevisionDate || '9999').localeCompare(b.nextRevisionDate || '9999');
+            });
+
+            return (
+                <div className="max-w-4xl mx-auto fade-in space-y-5">
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <button
+                            onClick={() => { setActiveView('dashboard');
+                                setActiveSubjectId(null); }}
+                            className="text-[#a1a1a6] hover:text-white p-1.5 rounded-lg hover:bg-[#1a1a1d]"
+                            aria-label="Back"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                        </button>
+                        <span className="text-2xl">{subject.icon}</span>
+                        <h2 className="text-xl font-bold text-white">{subject.name}</h2>
+                        <span
+                            className="text-sm px-3 py-1 rounded-full font-medium"
+                            style={{ backgroundColor: subject.color + '20', color: subject.color }}
+                        >
+                            {retention}% retention
+                        </span>
+                        <button onClick={() => setShowEditSubject(subject)} className="btn-ghost text-xs py-1 px-2">✏️ Edit</button>
+                        <button
+                            onClick={() => {
+                                if (window.confirm('Delete this subject and all its lessons?')) deleteSubject(subject.id);
+                            }}
+                            className="btn-danger text-xs py-1 px-2"
+                        >🗑️ Delete</button>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {sections.map(sec => (
+                            <span
+                                key={sec}
+                                onClick={() => setActiveSection(sec)}
+                                className={`chip ${activeSection === sec ? 'active' : 'bg-[#141416] text-[#a1a1a6]'}`}
+                            >{sec}</span>
+                        ))}
+                        <div className="flex items-center gap-1">
+                            <input
+                                type="text"
+                                value={newSectionName}
+                                onChange={e => setNewSectionName(e.target.value)}
+                                placeholder="New section..."
+                                className="!w-32 !py-1.5 !text-xs"
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter' && newSectionName.trim()) {
+                                        addSection(subject.id, newSectionName.trim());
+                                        setNewSectionName('');
+                                    }
+                                }}
+                            />
+                            <button
+                                onClick={() => {
+                                    if (newSectionName.trim()) {
+                                        addSection(subject.id, newSectionName.trim());
+                                        setNewSectionName('');
+                                    }
+                                }}
+                                className="btn-primary text-xs !py-1.5 !px-3"
+                            >+</button>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-sm font-semibold text-white">Lessons ({filteredLessons.length})</h3>
+                        <button onClick={() => setShowAddLesson(true)} className="btn-primary text-sm">+ Add Lesson</button>
+                    </div>
+
+                    {sortedLessons.length === 0 ? (
+                        <div className="glass-card p-10 text-center">
+                            <p className="text-4xl mb-3">📝</p>
+                            <p className="text-[#a1a1a6]">No lessons in this section.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {sortedLessons.map(lesson => (
+                                <div key={lesson.id} className="glass-card p-4 flex items-center gap-4 group flex-wrap">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="text-sm font-semibold text-white truncate">{lesson.title}</h4>
+                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${
+                                                lesson.status === 'mastered' ? 'bg-emerald-500/15 text-emerald-300' :
+                                                lesson.status === 'stable' ? 'bg-blue-500/15 text-blue-300' :
+                                                lesson.status === 'learning' ? 'bg-amber-500/15 text-amber-300' :
+                                                'bg-[#6b6b72]/15 text-[#6b6b72]'
+                                            }`}>{lesson.status}</span>
+                                            {data.examModes.some(em => em.criticalLessonIds.includes(lesson.id)) && <span>⭐</span>}
+                                        </div>
+                                        {lesson.description && (
+                                            <p className="text-xs text-[#6b6b72] mt-0.5 truncate">{lesson.description}</p>
+                                        )}
+                                        <div className="flex items-center gap-3 mt-2 text-xs text-[#6b6b72]">
+                                            <span>Mastery: {lesson.masteryPercentage || 30}%</span>
+                                            <span>·</span>
+                                            <span>{lesson.difficulty}</span>
+                                            <span>·</span>
+                                            <span>Section: {lesson.section || 'Default'}</span>
+                                            {lesson.interval && <><span>·</span><span>Interval: {lesson.interval}d</span></>}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        <button
+                                            onClick={() => handleReviewClick(lesson)}
+                                            className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all hover:scale-105 ${getStyle(lesson)}`}
+                                        >{getLabel(lesson)}</button>
+                                        <button
+                                            onClick={() => setShowEditLesson({ subjectId: subject.id, lesson })}
+                                            className="text-[#a1a1a6] hover:text-white p-1.5 rounded-lg hover:bg-[#1a1a1d] transition-all opacity-0 group-hover:opacity-100"
+                                            title="Edit"
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            onClick={() => deleteLesson(subject.id, lesson.id)}
+                                            className="text-[#6b6b72] hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                                            title="Delete"
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                            </svg>
+                                        </button>
+{lesson.blockReview && (
+  <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300">
+    🔁 Every {lesson.blockInterval} block{lesson.blockInterval > 1 ? 's' : ''}
+<div className="flex items-center gap-2">
+    <h4 className="text-sm font-semibold text-white truncate">{lesson.title}</h4>
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${
+        lesson.status === 'mastered' ? 'bg-emerald-500/15 text-emerald-300' :
+        lesson.status === 'stable' ? 'bg-blue-500/15 text-blue-300' :
+        lesson.status === 'learning' ? 'bg-amber-500/15 text-amber-300' :
+        'bg-[#6b6b72]/15 text-[#6b6b72]'
+    }`}>{lesson.status}</span>
+    {data.examModes.some(em => em.criticalLessonIds.includes(lesson.id)) && <span>⭐</span>}
+    {/* ── NEW ── */}
+    {lesson.blockReview && (
+        <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300">
+            🔁 Every {lesson.blockInterval} block{lesson.blockInterval > 1 ? 's' : ''}
+        </span>
+    )}
+</div>
+  </span>
+)}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+// Get ALL future block occurrences for a block‑repetition lesson (up to maxDate)
+const getAllFutureBlockDates = (subjectId, lesson, calendarBlocks, maxDate = addDays(todayStr(), 365)) => {
+    if (!lesson.blockReview || !lesson.blockInterval || lesson.blockInterval < 1) return [];
+    const blocks = calendarBlocks?.[subjectId];
+    if (!blocks?.dates || blocks.dates.length === 0) return [];
+
+    const start = lesson.nextRevisionDate;
+    if (!start) return [];
+
+    // Find the index of the first occurrence on/after the nextRevisionDate
+    let currentIdx = blocks.dates.findIndex(d => d >= start);
+    if (currentIdx === -1) currentIdx = blocks.dates.length - 1;
+
+    const occurrences = [];
+    // Walk forward by blockInterval steps, collecting all dates ≤ maxDate
+    while (currentIdx < blocks.dates.length && blocks.dates[currentIdx] <= maxDate) {
+        occurrences.push(blocks.dates[currentIdx]);
+        currentIdx += lesson.blockInterval;
+    }
+    // Remove the first occurrence if it’s exactly the nextRevisionDate (already shown separately)
+    return occurrences.filter(d => d !== start);
+};
+        // ──────────────────────────────────────
+        // CALENDAR VIEW
+        // ──────────────────────────────────────
+        const CalendarView = () => {
+    const {
+        calendarMonth, calendarYear, setCalendarMonth, setCalendarYear,
+        getAllLessons, setActiveSubjectId, setShowRatingModal,
+        data
+    } = useApp();
+    const allLessons = getAllLessons();
+    const today = todayStr();
+    const [dayDetail, setDayDetail] = useState(null); // { dateStr, lessons }
+
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+    const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
+    const adjFirst = firstDay === 0 ? 6 : firstDay - 1;
+
+    const prev = () => {
+        if (calendarMonth === 0) { setCalendarMonth(11); setCalendarYear(calendarYear - 1); }
+        else setCalendarMonth(calendarMonth - 1);
+    };
+    const next = () => {
+        if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(calendarYear + 1); }
+        else setCalendarMonth(calendarMonth + 1);
+    };
+
+    const getRevs = (d) => {
+        const ds = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const regularRevs = allLessons.filter(l => l.nextRevisionDate === ds);
+
+        const futureBlockRevs = allLessons
+            .filter(l => l.blockReview && l.blockInterval > 0)
+            .flatMap(l => {
+                const futureDates = getAllFutureBlockDates(l.subjectId, l, data.calendarBlocks);
+                return futureDates.includes(ds) ? [{ ...l, _futureBlock: true }] : [];
+            });
+
+        const seen = new Set(regularRevs.map(l => l.id));
+        const combined = [...regularRevs];
+        futureBlockRevs.forEach(l => {
+            if (!seen.has(l.id)) {
+                combined.push(l);
+                seen.add(l.id);
+            }
+        });
+        return combined;
+    };
+
+    const handleDayClick = (day) => {
+        if (!day) return;
+        const ds = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const lessons = getRevs(day);
+        setDayDetail({ dateStr: ds, lessons });
+    };
+
+    const days = [];
+    for (let i = 0; i < adjFirst; i++) days.push(null);
+    for (let d = 1; d <= daysInMonth; d++) days.push(d);
+
+    return (
+        <div className="max-w-5xl mx-auto fade-in space-y-4">
+            <div className="flex items-center justify-between">
+                <button onClick={prev} className="btn-ghost">← Prev</button>
+                <h3 className="text-lg font-semibold text-white">{monthNames[calendarMonth]} {calendarYear}</h3>
+                <button onClick={next} className="btn-ghost">Next →</button>
+            </div>
+            <div className="glass-card overflow-hidden">
+                <div className="grid grid-cols-7 border-b border-[#1e1e24]">
+                    {dayNames.map(d => (
+                        <div key={d} className="p-2.5 text-center text-xs font-semibold text-[#6b6b72] uppercase">{d}</div>
+                    ))}
+                </div>
+                <div className="grid grid-cols-7">
+                    {days.map((day, i) => {
+                        const revs = day ? getRevs(day) : [];
+                        const ds = day
+                            ? `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                            : '';
+                        const isToday = ds === today;
+                        return (
+                            <div
+                                key={i}
+                                onClick={() => handleDayClick(day)}
+                                className={`min-h-[80px] p-1.5 border-b border-r border-[#1e1e24] ${!day ? 'bg-[#0d0d10]' : 'cursor-pointer hover:bg-[#141416] transition-all'}`}
+                            >
+                                {day && (
+                                    <>
+                                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full inline-block mb-1 ${isToday ? 'bg-indigo-500 text-white' : 'text-[#a1a1a6]'}`}>
+                                            {day}
+                                        </span>
+                                        {revs.slice(0, 3).map(r => (
+                                            <div
+                                                key={r.id}
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // prevent opening day modal
+                                                    setActiveSubjectId(r.subjectId);
+                                                    if (r.nextRevisionDate && r.nextRevisionDate <= today) {
+                                                        setShowRatingModal({ subjectId: r.subjectId, lessonId: r.id, lessonTitle: r.title });
+                                                    }
+                                                }}
+                                                className="text-[10px] px-1.5 py-0.5 rounded-md mb-0.5 truncate cursor-pointer hover:opacity-80 font-medium"
+                                                style={{
+                                                    backgroundColor: r.subjectColor + '25',
+                                                    color: r.subjectColor,
+                                                    borderLeft: `2px solid ${r.subjectColor}`
+                                                }}
+                                            >{r.title}</div>
+                                        ))}
+                                        {revs.length > 3 && (
+                                            <span className="text-[10px] text-[#6b6b72]">+{revs.length - 3} more</span>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Day Detail Modal */}
+            {dayDetail && (
+                <div
+                    className="fixed inset-0 z-50 flex items-start justify-center pt-20 modal-overlay"
+                    onClick={() => setDayDetail(null)}
+                >
+                    <div
+                        className="bg-[#1a1a1d] border border-[#2a2a2e] rounded-2xl p-6 w-full max-w-lg mx-4 shadow-2xl max-h-[80vh] flex flex-col"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-white">
+                                {formatDate(dayDetail.dateStr)}
+                                {dayDetail.dateStr === today && (
+                                    <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300">Today</span>
+                                )}
+                            </h3>
+                            <button
+                                onClick={() => setDayDetail(null)}
+                                className="text-[#a1a1a6] hover:text-white p-1.5 rounded-lg hover:bg-[#141416]"
+                            >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M18 6L6 18M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto space-y-3">
+                            {dayDetail.lessons.length === 0 ? (
+                                <div className="text-center py-8 text-[#6b6b72]">
+                                    <p className="text-4xl mb-2">📭</p>
+                                    <p className="text-sm">No revisions scheduled</p>
+                                </div>
+                            ) : (
+                                dayDetail.lessons.map(lesson => {
+                                    const subject = data.subjects.find(s => s.id === lesson.subjectId);
+                                    return (
+                                        <div
+                                            key={lesson.id + (lesson._futureBlock ? '-fb' : '')}
+                                            className="flex items-start gap-3 p-3 rounded-xl bg-[#141416] hover:bg-[#1c1c20] transition-all cursor-pointer"
+                                            onClick={() => {
+                                                setActiveSubjectId(lesson.subjectId);
+                                                setDayDetail(null);
+                                                if (lesson.nextRevisionDate && lesson.nextRevisionDate <= today) {
+                                                    setShowRatingModal({ subjectId: lesson.subjectId, lessonId: lesson.id, lessonTitle: lesson.title });
+                                                }
+                                            }}
+                                        >
+                                            <div
+                                                className="w-3 h-3 rounded-full mt-1 flex-shrink-0"
+                                                style={{ backgroundColor: lesson.subjectColor }}
+                                            ></div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-medium text-white truncate">{lesson.title}</p>
+                                                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium capitalize ${
+                                                        lesson.status === 'mastered' ? 'bg-emerald-500/15 text-emerald-300' :
+                                                        lesson.status === 'stable' ? 'bg-blue-500/15 text-blue-300' :
+                                                        lesson.status === 'learning' ? 'bg-amber-500/15 text-amber-300' :
+                                                        'bg-[#6b6b72]/15 text-[#6b6b72]'
+                                                    }`}>{lesson.status}</span>
+                                                    {lesson._futureBlock && (
+                                                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300">🔁 future</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-1 text-xs text-[#6b6b72]">
+                                                    <span>{subject?.name || 'Unknown'}</span>
+                                                    <span>·</span>
+                                                    <span>{lesson.section || 'Default'}</span>
+                                                    <span>·</span>
+                                                    <span>{lesson.difficulty}</span>
+                                                    {lesson.interval && <>
+                                                        <span>·</span>
+                                                        <span>{lesson.interval}d interval</span>
+                                                    </>}
+                                                </div>
+                                                {lesson.blockReview && (
+                                                    <div className="text-xs text-indigo-300/70 mt-0.5">
+                                                        🔁 Repeats every {lesson.blockInterval} block(s)
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// ──────────────────────────────────────
+// ANALYTICS VIEW (simplified, resilient)
+// ──────────────────────────────────────
+const AnalyticsView = () => {
+    const { data, getAllLessons, getOverallRetention, rechartsAvailable } = useApp();
+    const allLessons = getAllLessons();
+    const overallRetention = getOverallRetention();
+    const today = todayStr();
+
+    // Check Recharts availability directly at render time
+    const RechartsLib = (rechartsAvailable && typeof window !== 'undefined' && window.Recharts) ? window.Recharts : null;
+    const ResponsiveContainer = RechartsLib?.ResponsiveContainer;
+    const AreaChart = RechartsLib?.AreaChart;
+    const Area = RechartsLib?.Area;
+    const XAxis = RechartsLib?.XAxis;
+    const YAxis = RechartsLib?.YAxis;
+    const Tooltip = RechartsLib?.Tooltip;
+
+    const subjectAnalytics = data.subjects.map(s => ({
+        name: s.name,
+        color: s.color,
+        retention: s.lessons.length > 0
+            ? Math.round(s.lessons.reduce((sum, l) => sum + getRetentionPercentage(l), 0) / s.lessons.length)
+            : 0,
+        lessonCount: s.lessons.length
+    })).filter(s => s.lessonCount > 0);
+
+    const weakestLessons = allLessons
+        .filter(l => l.status !== 'new')
+        .map(l => ({ ...l, retention: getRetentionPercentage(l) }))
+        .sort((a, b) => a.retention - b.retention)
+        .slice(0, 5);
+
+    const mostStable = allLessons
+        .filter(l => l.status === 'mastered' || l.status === 'stable')
+        .sort((a, b) => (b.interval || 0) - (a.interval || 0))
+        .slice(0, 5);
+
+    const predictedRisk = allLessons.filter(l => {
+        const r = getRetentionPercentage(l);
+        return r < 50 && r >= 20 && l.status !== 'new';
+    }).length;
+
+    const retentionTrend = useMemo(() => {
+        const t = [];
+        for (let i = 29; i >= 0; i--) {
+            const d = addDays(today, -i);
+            t.push({
+                date: d.substring(5),
+                revisions: allLessons.filter(l =>
+                    l.revisionHistory && l.revisionHistory.some(rh => rh.date === d)
+                ).length
+            });
+        }
+        return t;
+    }, [allLessons, today]);
+
+    // Unique key forces React to remount the chart when Recharts first becomes available
+    const chartKey = RechartsLib ? 'chart-active' : 'chart-inactive';
+
+    return (
+        <div className="max-w-5xl mx-auto fade-in space-y-5">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="glass-card p-4">
+                    <p className="text-xs text-[#a1a1a6]">Overall Retention</p>
+                    <p className="text-2xl font-bold text-emerald-400">{overallRetention}%</p>
+                </div>
+                <div className="glass-card p-4">
+                    <p className="text-xs text-[#a1a1a6]">Total Lessons</p>
+                    <p className="text-2xl font-bold text-white">{allLessons.length}</p>
+                </div>
+                <div className="glass-card p-4">
+                    <p className="text-xs text-[#a1a1a6]">Forgetting Risk</p>
+                    <p className="text-2xl font-bold text-red-400">{predictedRisk}</p>
+                </div>
+                <div className="glass-card p-4">
+                    <p className="text-xs text-[#a1a1a6]">Total Revisions</p>
+                    <p className="text-2xl font-bold text-indigo-400">
+                        {allLessons.reduce((s, l) => s + (l.revisionHistory ? l.revisionHistory.length : 0), 0)}
+                    </p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div className="glass-card p-4">
+                    <h3 className="text-sm font-semibold text-white mb-4">Revision Activity (30d)</h3>
+                    {RechartsLib && ResponsiveContainer && AreaChart ? (
+                        <ResponsiveContainer key={chartKey} width="100%" height={200}>
+                            <AreaChart data={retentionTrend}>
+                                <defs>
+                                    <linearGradient id="rg" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
+                                        <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6b6b72' }} axisLine={{ stroke: '#2a2a2e' }} tickLine={false} />
+                                <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#6b6b72' }} axisLine={{ stroke: '#2a2a2e' }} tickLine={false} />
+                                <Tooltip contentStyle={{ backgroundColor: '#1a1a1d', border: '1px solid #2a2a2e', borderRadius: '8px', color: '#f1f1f3', fontSize: '12px' }} />
+                                <Area type="monotone" dataKey="revisions" stroke="#6366f1" strokeWidth={2} fill="url(#rg)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="h-40 flex items-center justify-center text-[#6b6b72] text-sm">
+                            {rechartsAvailable ? 'Preparing chart...' : 'Chart library loading…'}
+                        </div>
+                    )}
+                    {retentionTrend.every(d => d.revisions === 0) && RechartsLib && (
+                        <p className="text-xs text-[#6b6b72] text-center mt-2">No revision activity recorded in the last 30 days.</p>
+                    )}
+                </div>
+                <div className="glass-card p-4">
+                    <h3 className="text-sm font-semibold text-white mb-4">Subject Breakdown</h3>
+                    <div className="space-y-3">
+                        {subjectAnalytics.length === 0 ? (
+                            <p className="text-sm text-[#6b6b72] text-center py-4">No data yet</p>
+                        ) : (
+                            subjectAnalytics.map(s => (
+                                <div key={s.name} className="flex items-center gap-3">
+                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }}></div>
+                                    <span className="text-sm text-[#d1d1d6] w-24 truncate">{s.name}</span>
+                                    <div className="flex-1 h-2 bg-[#1e1e24] rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full" style={{ width: `${s.retention}%`, backgroundColor: s.retention > 70 ? '#10b981' : s.retention > 40 ? '#f59e0b' : '#ef4444' }}></div>
+                                    </div>
+                                    <span className="text-xs text-[#a1a1a6] w-10 text-right">{s.retention}%</span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div className="glass-card p-4">
+                    <h3 className="text-sm font-semibold text-white mb-3">📉 Weakest Lessons</h3>
+                    {weakestLessons.length === 0 ? (
+                        <p className="text-sm text-[#6b6b72] text-center py-4">No weak lessons!</p>
+                    ) : (
+                        weakestLessons.map(l => (
+                            <div key={l.id} className="flex items-center gap-3 py-2 border-b border-[#1e1e24] last:border-0">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: l.subjectColor }}></div>
+                                <span className="text-sm text-[#d1d1d6] flex-1 truncate">{l.title}</span>
+                                <span className="text-xs text-red-400 font-medium">{l.retention}%</span>
+                            </div>
+                        ))
+                    )}
+                </div>
+                <div className="glass-card p-4">
+                    <h3 className="text-sm font-semibold text-white mb-3">🏆 Most Stable</h3>
+                    {mostStable.length === 0 ? (
+                        <p className="text-sm text-[#6b6b72] text-center py-4">Keep studying!</p>
+                    ) : (
+                        mostStable.map(l => (
+                            <div key={l.id} className="flex items-center gap-3 py-2 border-b border-[#1e1e24] last:border-0">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: l.subjectColor }}></div>
+                                <span className="text-sm text-[#d1d1d6] flex-1 truncate">{l.title}</span>
+                                <span className="text-xs text-emerald-400 font-medium">{l.interval || '?'}d</span>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+        // ──────────────────────────────────────
+        // EXAM MODE VIEW (multiple exams)
+        // ──────────────────────────────────────
+        const ExamModeView = () => {
+            const {
+                data, addExamMode, toggleExamMode, deleteExamMode, toggleCriticalLesson,
+                getAllLessons, getOverallRetention
+            } = useApp();
+            const [newExamName, setNewExamName] = useState('');
+            const [newExamDate, setNewExamDate] = useState('');
+            const [activeExamId, setActiveExamId] = useState(null);
+            const allLessons = getAllLessons();
+            const overallRetention = getOverallRetention();
+            const today = todayStr();
+
+            const activeExam = data.examModes.find(em => em.id === activeExamId) || data.examModes[0] || null;
+            const daysUntilExam = activeExam?.examDate ? daysBetween(today, activeExam.examDate) : null;
+
+            const handleAdd = () => {
+                if (newExamName && newExamDate) {
+                    addExamMode(newExamName, newExamDate);
+                    setNewExamName('');
+                    setNewExamDate('');
+                }
+            };
+
+            const weakLessons = activeExam
+                ? allLessons.filter(l => getRetentionPercentage(l) < 50 && l.status !== 'new')
+                    .sort((a, b) => getRetentionPercentage(a) - getRetentionPercentage(b))
+                : [];
+
+            return (
+                <div className="max-w-4xl mx-auto fade-in space-y-5">
+                    <div className="glass-card p-5">
+                        <h2 className="text-lg font-semibold text-white mb-3">Exam Preparation</h2>
+                        <div className="flex gap-2 flex-wrap mb-3">
+                            <input
+                                type="text"
+                                value={newExamName}
+                                onChange={e => setNewExamName(e.target.value)}
+                                placeholder="Exam name"
+                                className="!w-auto flex-1 min-w-[140px]"
+                            />
+                            <input
+                                type="date"
+                                value={newExamDate}
+                                onChange={e => setNewExamDate(e.target.value)}
+                                className="!w-auto flex-1 min-w-[140px]"
+                            />
+                            <button onClick={handleAdd} className="btn-primary text-sm" disabled={!newExamName || !newExamDate}>
+                                + Add Exam
+                            </button>
+                        </div>
+                        {data.examModes.length === 0 ? (
+                            <p className="text-sm text-[#6b6b72]">No exams configured yet.</p>
+                        ) : (
+                            <div className="flex gap-2 flex-wrap mb-3">
+                                {data.examModes.map(em => (
+                                    <span
+                                        key={em.id}
+                                        onClick={() => setActiveExamId(em.id)}
+                                        className={`chip cursor-pointer ${(activeExamId === em.id || (!activeExamId && em === data.examModes[0])) ? 'active' : 'bg-[#141416] text-[#a1a1a6]'}`}
+                                    >
+                                        {em.examName} {em.enabled ? '🟢' : '⚪'}
+                                        <button
+                                            onClick={e => {
+                                                e.stopPropagation();
+                                                deleteExamMode(em.id);
+                                                if (activeExamId === em.id) setActiveExamId(null);
+                                            }}
+                                            className="ml-1 text-red-400 hover:text-red-300"
+                                        >×</button>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {activeExam && (
+                        <>
+                            <div className="glass-card p-5 text-center">
+                                {daysUntilExam !== null && daysUntilExam <= 5 ? (
+                                    <p className="text-4xl mb-2">🚨</p>
+                                ) : daysUntilExam !== null && daysUntilExam <= 14 ? (
+                                    <p className="text-4xl mb-2">⏰</p>
+                                ) : (
+                                    <p className="text-4xl mb-2">🎯</p>
+                                )}
+                                <h3 className="text-xl font-bold text-white">{activeExam.examName}</h3>
+                                {daysUntilExam !== null && (
+                                    <p className={`text-3xl font-bold mt-2 ${
+                                        daysUntilExam <= 5 ? 'text-red-400' :
+                                        daysUntilExam <= 14 ? 'text-amber-400' : 'text-indigo-400'
+                                    }`}>{daysUntilExam} days left</p>
+                                )}
+                                <p className="text-sm text-[#a1a1a6] mt-1">Exam: {formatDate(activeExam.examDate)}</p>
+                                <button
+                                    onClick={() => toggleExamMode(activeExam.id, !activeExam.enabled)}
+                                    className={`mt-3 text-sm ${activeExam.enabled ? 'btn-ghost' : 'btn-primary'}`}
+                                >
+                                    {activeExam.enabled ? 'Pause Exam Mode' : 'Activate Exam Mode'}
+                                </button>
+                            </div>
+                            <div className="glass-card p-4">
+                                <h3 className="text-sm font-semibold text-white mb-3">⭐ Critical Lessons</h3>
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                    {allLessons.map(l => (
+                                        <div
+                                            key={l.id}
+                                            onClick={() => toggleCriticalLesson(activeExam.id, l.id)}
+                                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#141416] cursor-pointer"
+                                        >
+                                            <span>{activeExam.criticalLessonIds.includes(l.id) ? '⭐' : '☆'}</span>
+                                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: l.subjectColor }}></div>
+                                            <span className="text-sm text-[#d1d1d6] flex-1 truncate">{l.title}</span>
+                                            <span
+                                                className="text-xs"
+                                                style={{ color: getRetentionPercentage(l) > 60 ? '#10b981' : '#ef4444' }}
+                                            >{getRetentionPercentage(l)}%</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="glass-card p-4">
+                                <h3 className="text-sm font-semibold text-white mb-3">🔴 Weak Areas</h3>
+                                {weakLessons.length === 0 ? (
+                                    <p className="text-sm text-[#6b6b72] text-center py-4">No weak areas!</p>
+                                ) : (
+                                    weakLessons.slice(0, 10).map(l => (
+                                        <div key={l.id} className="flex items-center gap-3 py-2 border-b border-[#1e1e24] last:border-0">
+                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: l.subjectColor }}></div>
+                                            <span className="text-sm text-[#d1d1d6] flex-1 truncate">{l.title}</span>
+                                            <span className="text-xs text-red-400 font-medium">{getRetentionPercentage(l)}%</span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
+            );
+        };
+// Parse a weekly schedule text file
+// Returns: Map<weekDayNumber, array of subject names>
+// weekDayNumber: 0=Sunday,1=Monday,...,6=Saturday (to match JS Date.getDay)
+const parseWeeklySchedule = (text) => {
+  const dayMap = {
+    'MONDAY': 1,
+    'TUESDAY': 2,
+    'WEDNESDAY': 3,
+    'THURSDAY': 4,
+    'FRIDAY': 5,
+    'SATURDAY': 6,
+    'SUNDAY': 0
+  };
+
+  const lines = text.split(/\r?\n/);
+  const schedule = {}; // key: weekDayNumber, value: Set of normalized subject names
+  let currentDay = null;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue; // skip empty lines
+
+    const upper = trimmed.toUpperCase();
+    if (dayMap.hasOwnProperty(upper)) {
+      currentDay = dayMap[upper];
+      if (!schedule[currentDay]) schedule[currentDay] = new Set();
+      continue;
+    }
+
+    if (currentDay !== null) {
+      // Remove leading dash, bullet, whitespace
+      let subject = trimmed.replace(/^[-•\s]+/, '').trim().toLowerCase();
+      if (subject) {
+        schedule[currentDay].add(subject);
+      }
+    }
+  }
+  return schedule;
+};
+
+// Generate all dates from startDate to endDate that fall on given weekDays (array of numbers 0-6)
+const generateDatesForWeekDays = (startDate, endDate, weekDays) => {
+  const start = new Date(startDate + 'T00:00:00');
+  const end = new Date(endDate + 'T00:00:00');
+  const dates = [];
+  const cursor = new Date(start);
+  while (cursor <= end) {
+    if (weekDays.includes(cursor.getDay())) {
+      dates.push(cursor.toISOString().split('T')[0]);
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return dates;
+};
+
+// ──────────────────────────────────────
+// SETTINGS VIEW (with Calendar Integration)
+// ──────────────────────────────────────
+const SettingsView = () => {
+    const { data, updateSettings, exportData, importData, resetData, setData, getAllLessons, showToast } = useApp();
+    const [intervalsStr, setIntervalsStr] = useState(
+        (data.settings?.spacedRepetitionIntervals || [1, 3, 7, 14, 30,45]).join(', ')
+    );
+    const [easeFactor, setEaseFactor] = useState(String(data.settings?.defaultEaseFactor || 2.5));
+    const fileRef = useRef(null);
+    const icsFileRef = useRef(null);
+    const scheduleFileRef = useRef(null);  // new ref for .txt schedule
+
+    // For each subject, store the keyword locally while editing
+    const [subjectKeywords, setSubjectKeywords] = useState(() => {
+        const blocks = data.calendarBlocks || {};
+        const kw = {};
+        data.subjects.forEach(s => {
+            kw[s.id] = blocks[s.id]?.keyword || '';
+        });
+        return kw;
+    });
+
+    const handleSave = () => {
+        const intervals = intervalsStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
+        const ef = parseFloat(easeFactor);
+        updateSettings({
+            spacedRepetitionIntervals: intervals.length > 0 ? intervals : [1, 3, 7, 14, 30, 60, 120],
+            defaultEaseFactor: !isNaN(ef) && ef >= 1.3 ? ef : 2.5
+        });
+    };
+
+    // ── ICS import (unchanged, kept for compatibility) ──
+    const handleImportICS = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const text = ev.target.result;
+            const events = parseICSFile(text);
+            if (!events.length) {
+                showToast('No events found in the file.', 'error');
+                return;
+            }
+            const normalize = (str) => (str || '').trim().toLowerCase().replace(/\s+/g, ' ');
+            const newBlocks = {};
+            data.subjects.forEach(s => {
+                const kw = (subjectKeywords[s.id] || '').trim();
+                if (!kw) return;
+                const normKw = normalize(kw);
+                const dates = events
+                    .filter(ev => normalize(ev.summary) === normKw)
+                    .map(ev => ev.date);
+                const uniqueDates = [...new Set(dates)].sort();
+                newBlocks[s.id] = { keyword: kw, dates: uniqueDates };
+            });
+            setData(prev => ({ ...prev, calendarBlocks: newBlocks }));
+            showToast(`Imported ${events.length} events. Matched subjects updated.`, 'success');
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    };
+
+    // ── NEW: Manual weekly schedule import (.txt) ──
+    const handleWeeklyScheduleUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const text = ev.target.result;
+            try {
+                const schedule = parseWeeklySchedule(text);
+                const today = todayStr();
+                const oneYearAhead = addDays(today, 365);
+                const newBlocks = {};
+
+                data.subjects.forEach(s => {
+                    const keyword = (subjectKeywords[s.id] || '').trim().toLowerCase();
+                    if (!keyword) return;
+
+                    // Find all days where this subject appears
+                    const weekDays = [];
+                    for (let dayNum = 0; dayNum <= 6; dayNum++) {
+                        if (schedule[dayNum] && schedule[dayNum].has(keyword)) {
+                            weekDays.push(dayNum);
+                        }
+                    }
+
+                    if (weekDays.length > 0) {
+                        const dates = generateDatesForWeekDays(today, oneYearAhead, weekDays);
+                        newBlocks[s.id] = { keyword: subjectKeywords[s.id], dates };
+                    }
+                });
+
+                setData(prev => ({ ...prev, calendarBlocks: { ...prev.calendarBlocks, ...newBlocks } }));
+
+                const matchedCount = Object.keys(newBlocks).length;
+                const dateCounts = Object.values(newBlocks).reduce((sum, b) => sum + b.dates.length, 0);
+                showToast(`Weekly schedule imported! ${matchedCount} subjects matched, ${dateCounts} dates generated.`, 'success');
+            } catch (err) {
+                showToast('Failed to parse schedule file.', 'error');
+                console.error(err);
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = ''; // allow re-upload
+    };
+
+    const updateSubjectKeyword = (subjectId, value) => {
+        setSubjectKeywords(prev => ({ ...prev, [subjectId]: value }));
+    };
+
+    const getSubjectDatesDisplay = (subjectId) => {
+        const block = data.calendarBlocks && data.calendarBlocks[subjectId];
+        if (!block || !block.dates?.length) return 'No dates matched.';
+        return block.dates.slice(0, 10).join(', ') + (block.dates.length > 10 ? ` … (+${block.dates.length - 10})` : '');
+    };
+
+    return (
+        <div className="max-w-2xl mx-auto fade-in space-y-5">
+            {/* Spaced Repetition Settings */}
+            <div className="glass-card p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">⚙️ Spaced Repetition Settings</h2>
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-xs text-[#a1a1a6] block mb-1">Revision Intervals (days, comma-separated)</label>
+                        <input
+                            type="text"
+                            value={intervalsStr}
+                            onChange={e => setIntervalsStr(e.target.value)}
+                            placeholder="1, 3, 7, 14, 30, 60, 120"
+                        />
+                        <p className="text-xs text-[#6b6b72] mt-1">Used as reference for initial scheduling. The algorithm dynamically adjusts after each review.</p>
+                    </div>
+                    <div>
+                        <label className="text-xs text-[#a1a1a6] block mb-1">Default Ease Factor (≥ 1.3)</label>
+                        <input
+                            type="number"
+                            value={easeFactor}
+                            onChange={e => setEaseFactor(e.target.value)}
+                            min="1.3"
+                            max="5"
+                            step="0.1"
+                        />
+                        <p className="text-xs text-[#6b6b72] mt-1">Higher = longer intervals. 2.5 is standard.</p>
+                    </div>
+                    <button onClick={handleSave} className="btn-primary">Save Settings</button>
+                </div>
+            </div>
+
+            {/* Calendar Integration – Manual Weekly Schedule (NEW) */}
+            <div className="glass-card p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">📅 Weekly Schedule (Manual)</h2>
+                <p className="text-sm text-[#a1a1a6] mb-3">
+                    Write your weekly class schedule in a .txt file like this:<br/>
+                    <span className="text-xs font-mono bg-[#141416] p-1 rounded">MONDAY<br/>- Science<br/>- Geography<br/>...<br/>TUESDAY<br/>- Maths<br/>...</span><br/>
+                    Then set a <b>keyword</b> for each subject (must match the file’s subject name) and upload the file.
+                </p>
+                <div className="flex flex-wrap gap-3 mb-4">
+                    <button onClick={() => scheduleFileRef.current?.click()} className="btn-primary">📤 Upload .txt Schedule</button>
+                    <input
+                        type="file"
+                        ref={scheduleFileRef}
+                        className="hidden"
+                        accept=".txt"
+                        onChange={handleWeeklyScheduleUpload}
+                    />
+                </div>
+
+                <div className="space-y-4">
+                    {data.subjects.map(s => (
+                        <div key={s.id} className="p-3 bg-[#141416] rounded-xl">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="text-sm">{s.icon}</span>
+                                <span className="text-sm font-medium text-white">{s.name}</span>
+                            </div>
+                            <input
+                                type="text"
+                                value={subjectKeywords[s.id] || ''}
+                                onChange={e => updateSubjectKeyword(s.id, e.target.value)}
+                                placeholder="e.g. Science, Maths (match file)"
+                                className="text-sm mb-1"
+                            />
+                            <div className="text-xs text-[#6b6b72]">
+                                Matched dates: {getSubjectDatesDisplay(s.id)}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <p className="text-xs text-[#6b6b72] mt-3">
+                    After changing keywords, re‑upload the .txt file to update the matched dates.
+                </p>
+            </div>
+
+            {/* ICS Import (optional, still available) */}
+            <div className="glass-card p-6 opacity-70">
+                <h2 className="text-lg font-semibold text-white mb-4">📤 Alternative: Import .ics File</h2>
+                <p className="text-sm text-[#a1a1a6] mb-3">
+                    You can also import a Google Calendar .ics export. The keyword matching works the same way.
+                </p>
+                <div className="flex flex-wrap gap-3 mb-4">
+                    <button onClick={() => icsFileRef.current?.click()} className="btn-ghost">Import .ics File</button>
+                    <input
+                        type="file"
+                        ref={icsFileRef}
+                        className="hidden"
+                        accept=".ics"
+                        onChange={handleImportICS}
+                    />
+                </div>
+            </div>
+
+            {/* Backup & Restore */}
+            <div className="glass-card p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">💾 Backup & Restore</h2>
+                <div className="flex flex-wrap gap-3">
+                    <button onClick={exportData} className="btn-primary">📥 Export JSON Backup</button>
+                    <button onClick={() => fileRef.current?.click()} className="btn-ghost">📤 Import JSON Backup</button>
+                    <input
+                        type="file"
+                        ref={fileRef}
+                        className="hidden"
+                        accept=".json"
+                        onChange={e => {
+                            if (e.target.files[0]) importData(e.target.files[0]);
+                            e.target.value = '';
+                        }}
+                    />
+                </div>
+                <p className="text-xs text-[#6b6b72] mt-3">Export regularly to avoid data loss.</p>
+            </div>
+
+            {/* Danger Zone */}
+            <div className="glass-card p-6 border-red-500/20">
+                <h2 className="text-lg font-semibold text-red-400 mb-4">⚠️ Danger Zone</h2>
+                <button onClick={resetData} className="btn-danger">🗑️ Reset All Data</button>
+                <p className="text-xs text-[#6b6b72] mt-2">This permanently deletes all subjects, lessons, and exam data.</p>
+            </div>
+        </div>
+    );
+};        // ──────────────────────────────────────
+        // MODALS
+        // ──────────────────────────────────────
+        const AddSubjectModal = () => {
+            const { setShowAddSubject, addSubject } = useApp();
+            const [name, setName] = useState('');
+            const [icon, setIcon] = useState(subjectIcons[0]);
+            const [color, setColor] = useState(subjectColors[0]);
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay" onClick={() => setShowAddSubject(false)}>
+                    <div className="bg-[#1a1a1d] border border-[#2a2a2e] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-lg font-semibold text-white mb-4">New Subject</h3>
+                        <form onSubmit={e => { e.preventDefault(); if (name.trim()) addSubject(name.trim(), color, icon); }} className="space-y-4">
+                            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Subject name" autoFocus />
+                            <div className="flex gap-2 flex-wrap">
+                                {subjectIcons.map(ic => (
+                                    <button
+                                        key={ic}
+                                        type="button"
+                                        onClick={() => setIcon(ic)}
+                                        className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center ${icon === ic ? 'bg-indigo-500/30 border-2 border-indigo-400' : 'bg-[#141416] border border-[#2a2a2e]'}`}
+                                    >{ic}</button>
+                                ))}
+                            </div>
+                            <div className="flex gap-2 flex-wrap">
+                                {subjectColors.map(c => (
+                                    <button
+                                        key={c}
+                                        type="button"
+                                        onClick={() => setColor(c)}
+                                        className={`w-8 h-8 rounded-full transition-transform ${color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-[#1a1a1d] scale-110' : ''}`}
+                                        style={{ backgroundColor: c }}
+                                    ></button>
+                                ))}
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                                <button type="button" onClick={() => setShowAddSubject(false)} className="btn-ghost">Cancel</button>
+                                <button type="submit" className="btn-primary">Create</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const EditSubjectModal = () => {
+            const { showEditSubject, setShowEditSubject, editSubject } = useApp();
+            if (!showEditSubject) return null;
+            const s = showEditSubject;
+            const [name, setName] = useState(s.name);
+            const [icon, setIcon] = useState(s.icon);
+            const [color, setColor] = useState(s.color);
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay" onClick={() => setShowEditSubject(null)}>
+                    <div className="bg-[#1a1a1d] border border-[#2a2a2e] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-lg font-semibold text-white mb-4">Edit Subject</h3>
+                        <form onSubmit={e => { e.preventDefault(); if (name.trim()) editSubject(s.id, { name: name.trim(), icon, color }); }} className="space-y-4">
+                            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Subject name" autoFocus />
+                            <div className="flex gap-2 flex-wrap">
+                                {subjectIcons.map(ic => (
+                                    <button
+                                        key={ic}
+                                        type="button"
+                                        onClick={() => setIcon(ic)}
+                                        className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center ${icon === ic ? 'bg-indigo-500/30 border-2 border-indigo-400' : 'bg-[#141416] border border-[#2a2a2e]'}`}
+                                    >{ic}</button>
+                                ))}
+                            </div>
+                            <div className="flex gap-2 flex-wrap">
+                                {subjectColors.map(c => (
+                                    <button
+                                        key={c}
+                                        type="button"
+                                        onClick={() => setColor(c)}
+                                        className={`w-8 h-8 rounded-full transition-transform ${color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-[#1a1a1d] scale-110' : ''}`}
+                                        style={{ backgroundColor: c }}
+                                    ></button>
+                                ))}
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                                <button type="button" onClick={() => setShowEditSubject(null)} className="btn-ghost">Cancel</button>
+                                <button type="submit" className="btn-primary">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const AddLessonModal = () => {
+    const { data, activeSubjectId, setShowAddLesson, addLesson } = useApp();
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [difficulty, setDifficulty] = useState('medium');
+    const [masteryPercentage, setMasteryPercentage] = useState(30);
+    const [section, setSection] = useState('Default');
+    const [manualNext, setManualNext] = useState('');
+    // ── NEW state ──
+    const [blockReview, setBlockReview] = useState(false);
+    const [blockInterval, setBlockInterval] = useState(4);
+
+    const subject = data.subjects.find(s => s.id === activeSubjectId);
+    const sections = subject?.sections || ['Default'];
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay" onClick={() => setShowAddLesson(false)}>
+            <div className="bg-[#1a1a1d] border border-[#2a2a2e] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold text-white mb-1">Add Lesson</h3>
+                {subject && <p className="text-sm text-[#6b6b72] mb-4">{subject.icon} {subject.name}</p>}
+                <form onSubmit={e => {
+                    e.preventDefault();
+                    if (title.trim() && activeSubjectId) {
+                        addLesson(activeSubjectId, {
+                            title: title.trim(),
+                            description: description.trim(),
+                            difficulty,
+                            masteryPercentage,
+                            section,
+                            manualNextRevision: manualNext || null,
+                            dateFirstStudied: todayStr(),
+                            // ── NEW ──
+                            blockReview,
+                            blockInterval: blockReview ? blockInterval : 0,
+                        });
+                    }
+                }} className="space-y-3">
+                    <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Lesson title" autoFocus />
+                    <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Optional notes..." rows={2}></textarea>
+                    <div className="flex gap-3">
+                        <div className="flex-1">
+                            <label className="text-xs text-[#a1a1a6] block mb-1">Difficulty</label>
+                            <select value={difficulty} onChange={e => setDifficulty(e.target.value)}>
+                                <option value="easy">Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                        <div className="flex-1">
+                            <label className="text-xs text-[#a1a1a6] block mb-1">Mastery %</label>
+                            <input type="number" value={masteryPercentage} onChange={e => setMasteryPercentage(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))} min="0" max="100" />
+                        </div>
+                    </div>
+                    <div className="flex gap-3">
+                        <div className="flex-1">
+                            <label className="text-xs text-[#a1a1a6] block mb-1">Section</label>
+                            <select value={section} onChange={e => setSection(e.target.value)}>
+                                {sections.map(sec => <option key={sec} value={sec}>{sec}</option>)}
+                            </select>
+                        </div>
+                        <div className="flex-1">
+                            <label className="text-xs text-[#a1a1a6] block mb-1">Next Revision (optional)</label>
+                            <input type="date" value={manualNext} onChange={e => setManualNext(e.target.value)} />
+                        </div>
+                    </div>
+
+                    {/* ─── NEW: block repetition toggle ─── */}
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            checked={blockReview}
+                            onChange={e => setBlockReview(e.target.checked)}
+                            id="blockReviewAdd"
+                            className="accent-indigo-500"
+                        />
+                        <label htmlFor="blockReviewAdd" className="text-xs text-[#a1a1a6]">
+                            Use calendar block repetition
+                        </label>
+                    </div>
+                    {blockReview && (
+                        <div>
+                            <label className="text-xs text-[#a1a1a6] block mb-1">
+                                Show every X blocks
+                            </label>
+                            <input
+                                type="number"
+                                value={blockInterval}
+                                onChange={e => setBlockInterval(Math.max(1, parseInt(e.target.value) || 1))}
+                                min="1"
+                                className="!w-24"
+                            />
+                            <p className="text-xs text-[#6b6b72] mt-1">
+                                The lesson will skip {blockInterval - 1} block(s) and appear on the {blockInterval}<sup>th</sup> block.
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="flex gap-2 justify-end">
+                        <button type="button" onClick={() => setShowAddLesson(false)} className="btn-ghost">Cancel</button>
+                        <button type="submit" className="btn-primary">Add Lesson</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+        const EditLessonModal = () => {
+    const { showEditLesson, setShowEditLesson, editLessonFull, data } = useApp();
+    if (!showEditLesson) return null;
+    const { subjectId, lesson } = showEditLesson;
+    const subject = data.subjects.find(s => s.id === subjectId);
+    const sections = subject?.sections || ['Default'];
+    const [title, setTitle] = useState(lesson.title);
+    const [description, setDescription] = useState(lesson.description || '');
+    const [difficulty, setDifficulty] = useState(lesson.difficulty);
+    const [masteryPercentage, setMasteryPercentage] = useState(lesson.masteryPercentage || 30);
+    const [section, setSection] = useState(lesson.section || 'Default');
+    const [status, setStatus] = useState(lesson.status);
+    const [nextRevisionDate, setNextRevisionDate] = useState(lesson.nextRevisionDate || '');
+    const [interval, setInterval] = useState(lesson.interval || '');
+    const [easeFactor, setEaseFactor] = useState(lesson.easeFactor || 2.5);
+    // ── NEW state ──
+    const [blockReview, setBlockReview] = useState(lesson.blockReview || false);
+    const [blockInterval, setBlockInterval] = useState(lesson.blockInterval || 4);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay" onClick={() => setShowEditLesson(null)}>
+            <div className="bg-[#1a1a1d] border border-[#2a2a2e] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold text-white mb-1">Edit Lesson</h3>
+                <p className="text-sm text-[#6b6b72] mb-4">{subject?.icon} {subject?.name}</p>
+                <form onSubmit={e => {
+                    e.preventDefault();
+                    editLessonFull(subjectId, lesson.id, {
+                        title: title.trim(),
+                        description: description.trim(),
+                        difficulty,
+                        masteryPercentage,
+                        section,
+                        status,
+                        nextRevisionDate: nextRevisionDate || null,
+                        interval: interval ? parseInt(interval) : null,
+                        easeFactor: parseFloat(easeFactor) || 2.5,
+                        // ── NEW ──
+                        blockReview,
+                        blockInterval: blockReview ? blockInterval : 0,
+                    });
+                }} className="space-y-3">
+                    <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Lesson title" />
+                    <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Notes..." rows={2}></textarea>
+                    <div className="flex gap-3">
+                        <div className="flex-1">
+                            <label className="text-xs text-[#a1a1a6] block mb-1">Difficulty</label>
+                            <select value={difficulty} onChange={e => setDifficulty(e.target.value)}>
+                                <option value="easy">Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                        <div className="flex-1">
+                            <label className="text-xs text-[#a1a1a6] block mb-1">Mastery %</label>
+                            <input type="number" value={masteryPercentage} onChange={e => setMasteryPercentage(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))} />
+                        </div>
+                    </div>
+                    <div className="flex gap-3">
+                        <div className="flex-1">
+                            <label className="text-xs text-[#a1a1a6] block mb-1">Section</label>
+                            <select value={section} onChange={e => setSection(e.target.value)}>
+                                {sections.map(sec => <option key={sec} value={sec}>{sec}</option>)}
+                            </select>
+                        </div>
+                        <div className="flex-1">
+                            <label className="text-xs text-[#a1a1a6] block mb-1">Status</label>
+                            <select value={status} onChange={e => setStatus(e.target.value)}>
+                                <option value="new">New</option>
+                                <option value="learning">Learning</option>
+                                <option value="stable">Stable</option>
+                                <option value="mastered">Mastered</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="flex gap-3">
+                        <div className="flex-1">
+                            <label className="text-xs text-[#a1a1a6] block mb-1">Next Revision Date</label>
+                            <input type="date" value={nextRevisionDate} onChange={e => setNextRevisionDate(e.target.value)} />
+                        </div>
+                        <div className="flex-1">
+                            <label className="text-xs text-[#a1a1a6] block mb-1">Interval (days)</label>
+                            <input type="number" value={interval} onChange={e => setInterval(e.target.value)} min="1" />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-xs text-[#a1a1a6] block mb-1">Ease Factor</label>
+                        <input type="number" value={easeFactor} onChange={e => setEaseFactor(e.target.value)} min="1.3" max="5" step="0.1" />
+                    </div>
+
+                    {/* ─── NEW: block repetition toggle ─── */}
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            checked={blockReview}
+                            onChange={e => setBlockReview(e.target.checked)}
+                            id="blockReviewEdit"
+                            className="accent-indigo-500"
+                        />
+                        <label htmlFor="blockReviewEdit" className="text-xs text-[#a1a1a6]">
+                            Use calendar block repetition
+                        </label>
+                    </div>
+                    {blockReview && (
+                        <div>
+                            <label className="text-xs text-[#a1a1a6] block mb-1">
+                                Show every X blocks
+                            </label>
+                            <input
+                                type="number"
+                                value={blockInterval}
+                                onChange={e => setBlockInterval(Math.max(1, parseInt(e.target.value) || 1))}
+                                min="1"
+                                className="!w-24"
+                            />
+                            <p className="text-xs text-[#6b6b72] mt-1">
+                                The lesson will skip {blockInterval - 1} block(s) and appear on the {blockInterval}<sup>th</sup> block.
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="flex gap-2 justify-end">
+                        <button type="button" onClick={() => setShowEditLesson(null)} className="btn-ghost">Cancel</button>
+                        <button type="submit" className="btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+        const RatingModal = () => {
+            const { showRatingModal, setShowRatingModal, rateRecall } = useApp();
+            if (!showRatingModal) return null;
+            const { subjectId, lessonId, lessonTitle } = showRatingModal;
+            const qualities = [
+                { key: 'easy', label: 'Easy', emoji: '😊', color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25' },
+                { key: 'medium', label: 'Medium', emoji: '🤔', color: 'bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25' },
+                { key: 'hard', label: 'Hard', emoji: '😰', color: 'bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25' },
+                { key: 'forgotten', label: 'Forgotten', emoji: '😞', color: 'bg-red-500/15 text-red-300 border-red-500/30 hover:bg-red-500/25' },
+            ];
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay" onClick={() => setShowRatingModal(null)}>
+                    <div className="bg-[#1a1a1d] border border-[#2a2a2e] rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-lg font-semibold text-white mb-1">Rate Your Recall</h3>
+                        <p className="text-sm text-[#a1a1a6] mb-4 truncate">{lessonTitle}</p>
+                        <div className="grid grid-cols-2 gap-2">
+                            {qualities.map(q => (
+                                <button
+                                    key={q.key}
+                                    onClick={() => rateRecall(subjectId, lessonId, q.key)}
+                                    className={`p-4 rounded-xl border text-center transition-all ${q.color} flex flex-col items-center gap-1`}
+                                >
+                                    <span className="text-2xl">{q.emoji}</span>
+                                    <span className="text-sm font-medium">{q.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                        <button onClick={() => setShowRatingModal(null)} className="btn-ghost w-full mt-3 text-sm">Cancel</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const ToastMessage = () => {
+            const { toast } = useApp();
+            if (!toast) return null;
+            const bgColors = {
+                success: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300',
+                info: 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300',
+                error: 'bg-red-500/20 border-red-500/40 text-red-300'
+            };
+            return (
+                <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl border text-sm font-medium animate-bounce shadow-lg ${bgColors[toast.type] || bgColors.info}`}>
+                    {toast.msg}
+                </div>
+            );
+        };
+
+        // ──────────────────────────────────────
+        // MOUNT THE APP
+        // ──────────────────────────────────────
+        ReactDOM.render(
+            <ErrorBoundary><App /></ErrorBoundary>,
+            document.getElementById('root')
+        );
+    </script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+</body>
+</html>
